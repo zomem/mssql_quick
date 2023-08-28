@@ -1,0 +1,23 @@
+[package]
+name = "mssql_quick"
+version = "1.0.1"
+edition = "2021"
+authors = ["zomem"]
+description = "mssql 数据库快速连接方法"
+license = "MIT"
+readme = "README.md"
+include = ["/src"]
+repository = "https://github.com/zomem/mssql_quick"
+keywords = ["mssql", "sql"]
+categories = ["database"]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", default-features = false, features = ["alloc"] }
+regex = "1.7"
+tiberius = { version="0.12.2"}
+tiberius-derive = "0.0.2"
+tokio-util = { version = "0.7", features = ["compat"] }
+tokio = {version = "1.25.0", features = ["full"]}
