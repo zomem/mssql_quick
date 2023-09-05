@@ -1,11 +1,15 @@
 mod method;
 pub use method::*;
 
+pub use tiberius::{error::Error, Client, ColumnType, Config};
+pub use tokio::net::TcpStream;
+pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
+
 #[cfg(test)]
 mod tests {
     use crate::{
         ms_run_vec, mscount, msdel, msfind, msget, msset, mssetmany, msupdate, msupdatemany,
-        EncryptionLevel, MssqlQuick, MssqlQuickSet,
+        EncryptionLevel, MssqlQuick,
     };
     use serde::{Deserialize, Serialize};
 

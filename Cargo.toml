@@ -1,6 +1,6 @@
 [package]
 name = "mssql_quick"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["zomem"]
 description = "mssql 数据库快速连接方法"
@@ -17,7 +17,7 @@ categories = ["database"]
 serde = { version = "1", features = ["derive"] }
 serde_json = { version = "1", default-features = false, features = ["alloc"] }
 regex = "1.7"
-tiberius = { version="0.12.2"}
-tiberius-derive = "0.0.2"
+tiberius = { version="0.12.2", features = ["chrono"]}
+# tiberius-derive = "0.0.2"
 tokio-util = { version = "0.7", features = ["compat"] }
 tokio = {version = "1.25.0", features = ["full"]}

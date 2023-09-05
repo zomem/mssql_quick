@@ -2,7 +2,7 @@
 
 ### mssql 数据库连接方法封装
 ```rust
-use crate::{
+use mssql_quick::{
     ms_run_vec, mscount, msdel, msfind, msget, msset, mssetmany, msupdate, msupdatemany,
     EncryptionLevel, MssqlQuick, MssqlQuickSet,
 };
@@ -16,14 +16,14 @@ let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
 ```
 
 
-### mssql 查寻方法
+### mssql sql执行
 
 |  运行sql   | 说明  |
 |  ----  | ----  |
 | ms_run_vec  | 执行sql，返回vec类型数据，无数据则返回`vec![]` |
 
 ```rust
-let id: u64 = ms_run_vec(&mut conn, sql).unwrap();
+let id: u64 = ms_run_vec(&mut client, sql).unwrap();
 
 // 执行 sql 语句
 let data: Vec<serde_json::Value> = ms_run_vec(&mut conn, sql).unwrap();

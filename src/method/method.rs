@@ -1,4 +1,4 @@
-use tiberius::{error::Error, Client, ColumnType, Config};
+use tiberius::{error::Error, time::chrono::NaiveDateTime, Client, ColumnType, Config};
 use tokio::net::TcpStream;
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
@@ -198,6 +198,19 @@ where
                     match val {
                         Some(v) => {
                             item += format!(r#""{}":{},"#, f_name, v).as_str();
+                        }
+                        None => {
+                            item += format!(r#""{}":null,"#, f_name).as_str();
+                        }
+                    }
+                }
+                ColumnType::Datetimen | ColumnType::Datetime2 | ColumnType::Datetime => {
+                    let val: Option<NaiveDateTime> = row.get(index);
+                    match val {
+                        Some(v) => {
+                            let date_str = v.to_string();
+                            let v_c = serde_json::to_string(&date_str).unwrap();
+                            item += format!(r#""{}":{},"#, f_name, v_c).as_str();
                         }
                         None => {
                             item += format!(r#""{}":null,"#, f_name).as_str();
