@@ -37,6 +37,7 @@ let data: Vec<serde_json::Value> = ms_run_vec(&mut conn, sql).unwrap();
 |  ----  | ----  |
 | mscount  | 返回计数的sql |
 | msdel  | 删除一条数据的sql |
+| msdelmany  | 批量删除数据的sql |
 | msfind  | 查寻数据的sql |
 | msget  | 查寻一条数据的sql |
 | msset  | 新增一条数据的sql |

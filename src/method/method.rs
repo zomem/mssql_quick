@@ -12,7 +12,7 @@ pub struct MssqlQuick {
 }
 
 impl MssqlQuick {
-    pub async fn new(url: &str, encryp_level: EncryptionLevel) -> Result<MssqlQuick, Error> {
+    pub async fn new(url: &str, encryp_level: EncryptionLevel) -> anyhow::Result<MssqlQuick> {
         let mut config = Config::from_ado_string(url)?;
         config.encryption(encryp_level);
         let tcp = TcpStream::connect(config.get_addr()).await?;
@@ -55,7 +55,7 @@ impl MssqlQuick {
 pub async fn ms_run_vec<T>(
     client: &mut Client<Compat<TcpStream>>,
     sql: String,
-) -> Result<Vec<T>, Error>
+) -> anyhow::Result<Vec<T>>
 where
     T: Serialize + DeserializeOwned,
 {
@@ -209,7 +209,7 @@ where
                     match val {
                         Some(v) => {
                             let date_str = v.to_string();
-                            let v_c = serde_json::to_string(&date_str).unwrap();
+                            let v_c = serde_json::to_string(&date_str)?;
                             item += format!(r#""{}":{},"#, f_name, v_c).as_str();
                         }
                         None => {
@@ -221,7 +221,7 @@ where
                     let val: Option<&str> = row.get(f_name);
                     match val {
                         Some(v) => {
-                            let v_c = serde_json::to_string(&v).unwrap();
+                            let v_c = serde_json::to_string(&v)?;
                             item += format!(r#""{}":{},"#, f_name, v_c).as_str();
                         }
                         None => {
@@ -239,6 +239,6 @@ where
         list_str.pop();
     }
     list_str += "]";
-    let jsonvalue: Vec<T> = serde_json::from_str(list_str.as_str()).unwrap();
+    let jsonvalue: Vec<T> = serde_json::from_str(list_str.as_str())?;
     Ok(jsonvalue)
 }

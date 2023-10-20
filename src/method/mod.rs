@@ -24,6 +24,9 @@ mod msupdate;
 #[macro_use]
 mod msupdatemany;
 
+#[macro_use]
+mod msdelmany;
+
 mod method;
 pub use method::*;
 
