@@ -1,66 +1,75 @@
+///
 /// 批量新增数据 ，返回 sql 语句。
-/// 下面示例中，user 为表名，，name、num 为字段名，，后面为新增的值。
 ///
 /// ```
+/// use serde::{Deserialize, Serialize};
+/// use mssql_quick::{mssetmany, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
 /// #[derive(Serialize, Deserialize)]
 /// struct Item {
+///     title: String,
 ///     content: String,
-///     total: u32,
+///     price: f32,
+///     total: Option<u32>,
+///     uid: u32,
 /// }
 /// let vec_data = vec![
-///     Item {content: String::from("aaa"), total: 12},
-///     Item {content: String::from("bb"), total: 1},
+///     Item {
+///         title: "mssetmany名字".to_string(),
+///         content: "null".to_string(),
+///         price: 32.23,
+///         total: Some(12),
+///         uid: 3
+///     },
+///     Item {
+///         title: "mssetmany名字名字2".to_string(),
+///         content: String::from(r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#),
+///         price: 12.2,
+///         total: None,
+///         uid: 2
+///     },
 /// ];
-/// let sql = mssetmany!("content", vec_data);
+/// let sql = mssetmany!("for_test", vec_data);
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
 #[macro_export]
 macro_rules! mssetmany {
     ($t:expr, $v: expr) => {{
-        // fn type_of<T>(_: T) -> &'static str {
-        //     std::any::type_name::<T>()
-        // }
         let mut field_name = " (".to_string();
         let mut value = "".to_string();
         for i in 0..$v.len() {
-            let mut item_str = serde_json::to_string(&$v[i]).unwrap();
-            item_str.pop();
-            item_str.remove(0);
-            item_str.push(',');
-            item_str.push('"');
-            item_str.insert(0, ',');
-            // ",\"content\":\"aaa\",\"total\":12,\"uid\":3,\"des\":\"nn\",\""
+            let item_str = serde_json::to_string(&$v[i]).unwrap();
+            let o: serde_json::Value = serde_json::from_str(&item_str).unwrap();
             value = value + " (";
-            let re2 = regex::Regex::new("\":(.*?),\"").unwrap();
-            for cap2 in re2.captures_iter(item_str.as_str()) {
-                let temp_v = &cap2[1];
-                let mut value_cap;
-                if temp_v == "null" {
-                    value_cap = "NULL,".to_owned();
-                } else {
-                    value_cap = temp_v.to_string() + ",";
-                    if let Some(c) = temp_v.chars().next() {
-                        if c == '"' {
-                            let mut v_r = temp_v.to_string();
-                            v_r.remove(0);
-                            v_r.pop();
-                            v_r = v_r.replace("'", "''");
-                            value_cap = "N'".to_owned() + &v_r + "',";
-                        }
+            for key in o.as_object().unwrap().keys() {
+                if i == 0 {
+                    field_name = field_name + &key + ",";
+                }
+                let temp_v = &o[key];
+                if (temp_v.is_number()) {
+                    value = value + temp_v.to_string().as_str() + ",";
+                } else if temp_v.is_null() {
+                    value = value + "NULL,";
+                } else if temp_v.is_string() {
+                    let t_v = temp_v.as_str().unwrap();
+                    if t_v == "null" {
+                        value = value + "NULL,";
+                    } else {
+                        let mut v_r = t_v.to_string();
+                        v_r = v_r.replace("'", "''");
+                        value = value + "N'" + &v_r + "',"
                     }
                 }
-                value = value + value_cap.as_str();
             }
-            value.pop();
-            value = value + "),";
-
             if i == 0 {
-                let re = regex::Regex::new(",\"([0-9a-zA-Z_]+?)\":").unwrap();
-                for cap in re.captures_iter(item_str.as_str()) {
-                    field_name = field_name + &cap[1] + ",";
-                }
                 field_name.pop();
                 field_name = field_name + ")";
             }
+            value.pop();
+            value = value + "),";
         }
         value.pop();
 

@@ -1,30 +1,42 @@
 /// 1.通过id，更新数据 ，返回 sql 语句。
 /// ```
-/// let sql = msupdate!("feedback", 50, {
-///     "content": "这里有",
-///     "uid": 77,
-///     "des": "null",    // 表示更新该字段值为NULL
-/// })  // id = 50
-///
-/// ms_run_vec(&mut client, sql).await.unwrap();
+/// # use mssql_quick::{msupdate, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
+/// let sql = msupdate!("for_test", 5, {
+///     "title": "更新标题",
+///     "uid": 6,
+///     "content": des_str,
+/// });  // id = 5
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
 ///
 /// // 原子更新，(如果使用[字段，值]的方式，都所有都需要使用这种形式)
-/// let sql2 = msupdate!("feedback", 50, {
-///     "content": ["set", "更新"],  // set 就是替换操作
-///     "uid": ["incr", -23],   // incr 原子性加减
-///     "des": ["unset", ""]   // unset 清空值
-/// })
-///
+/// let sql = msupdate!("for_test", 6, {
+///     "title": ["set", "价格减2"],  // set 修改操作
+///     "price": ["incr", -2],   // incr 原子性加减
+///     "content": ["unset", ""],   // unset 清空值
+/// });
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
 ///
 /// 2.通过指定字段的值，更新数据 ，返回 sql 语句。
 /// ```
-/// // uid = 12
-/// let sql = msupdate!("feedback", {"uid": 12}, {"name": "zh"});
+/// # use mssql_quick::{msupdate, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// let sql = msupdate!("for_test", {"uid": 5}, {"title": "更新了uid为5的数据"}); // 更新 uid = 5 的第一条数据
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
 ///
-/// ms_run_vec(&mut client, sql).await.unwrap();
-///
+/// // 原子性更新
+/// let sql = msupdate!("for_test", {"uid": 5}, {"total": ["incr", 1]});
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
+///
 #[macro_export]
 macro_rules! msupdate {
     ($t:expr, {$ik:tt: $iv:expr}, {$($k:tt: [$m:tt, $v:expr]),+$(,)?}) => {

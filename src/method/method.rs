@@ -42,16 +42,6 @@ impl MssqlQuick {
 }
 
 /// 运行sql语句，返回想要的结果
-/// ### 示例
-/// ```
-/// let sql = msget!("feedback", 33, "*");
-/// #[derive(Serialize, Deserialize, Debug)]
-/// struct Feedback {
-///     id: u64,
-///     cc: String
-/// }
-/// let res_get: Vec<Feedback> = ms_run_vec(&mut client, sql).await.unwrap();
-/// ```
 pub async fn ms_run_vec<T>(
     client: &mut Client<Compat<TcpStream>>,
     sql: String,

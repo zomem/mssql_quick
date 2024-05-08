@@ -1,18 +1,31 @@
-/// 查寻数据，返回sql
+/// 查寻数据，返回 sql 语句
 ///
 /// 完整参数如下，注意，参数可以省略，但顺序固定。
-/// ```
 ///
-/// j*: 为 join 操作，["字段", "方法", "字段2"]， 主表"字段"，可以只写字段名
-/// j*方法有：`inner、left、right、full`
-/// p*: 为查寻操作，["字段", "方法", "参数"],  主表"字段"，可以只写字段名
-/// p*查寻方法有：`>、<、=、!=、<=、>=、like、in、not_in、is_null`
+/// j*: 为 join 操作，【"字段1", "方法", "字段2"】
+/// 方法有：`inner、left、left_outer、right、right_outer、full、full_outer、cross`
+///
+/// p*: 为查寻操作，【"字段", "方法", "参数"】
+/// 方法有：`>、<、=、!=、<=、>=、like、in、not_in、is_null`
+///
+/// r: 为p的组合条件(必填)，如：`p0`、`p1 && (p0 || p2)`
+///
+/// page: 翻页，如：`1`
+///
+/// limit: 每页数量，如：`15`
+///
+/// order_by: 排序，如：`-created_at,time` 默认为`id`
+///
+/// select: 字段选择，如：`id,avatar_url as url,users.name` 默认为`*`
 ///
 /// ```
-///
-/// ```
-/// // 重命名用 as 操作
-/// msfind!("feedback as fb", {
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msfind, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// // 示例如下
+/// let sql = msfind!("feedback as fb", {
 ///     j0: ["uid", "inner", "users.id"],
 ///     j1: ["uid", "inner", "users as u2.id"], // 对表重命名
 ///     j2: ["book_id", "left", "book.id"],
@@ -33,6 +46,46 @@
 ///     order_by: "-created_at,   time, -users.updated_at", // 排序
 ///     select: "id, name,   avatar_url as aurl,users.c, u2.name", // 字段选择
 /// });
+///
+/// #[derive(Serialize, Deserialize, Debug)]
+/// struct Item {
+///     id: u64,
+///     title: String,
+///     nickname: Option<String>
+/// }
+/// let sql = msfind!("for_test", {
+///     j0: ["uid", "inner", "users.id"],
+///     p0: ["total", ">", 10],
+///     p1: ["users.age", ">", 1],
+///     r: "p0 && p1",
+///     page: 1,
+///     select: "id,users.nickname,title",
+/// });
+/// let res: Vec<Item> = ms_run_vec(&mut client, sql).await.unwrap();
+///
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
+/// let sql = msfind!("for_test", {
+///    p0: ["content", "=", des_str],
+///    r: "p0",
+/// });
+/// let res: Vec<serde_json::Value> = ms_run_vec(&mut client, sql).await.unwrap();
+///
+/// // 其他用法
+/// let sql = msfind!("for_test", {
+///    p0: ["content", "=", des_str],
+///    r: "p0",
+///    select: "SUM(age)",
+///    group: "age",
+///    have: "age > 0",
+///    group_order_by: "-age",
+/// });
+/// let sql = msfind!("for_test", {
+///    p0: ["content", "=", "abc"],
+///    r: "p0",
+///    select: "distinct name",
+/// });
+/// # });
+/// ```
 ///
 #[macro_export]
 macro_rules! msfind {
@@ -56,6 +109,9 @@ macro_rules! msfind {
         $(limit: $limit:expr,)?
         $(order_by: $order_by:expr,)?
         $(select: $select:expr,)?
+        $(group: $group:expr,)?
+        $(have: $have:expr,)?
+        $(group_order_by: $group_order_by:expr,)?
     }) => {
         {
             fn _type_of<T>(_: T) -> &'static str {
@@ -93,38 +149,41 @@ macro_rules! msfind {
                 tmp_name
             }
             fn _get_p_in(tmp_v: String) -> String {
-                let tmp_v = tmp_v.replace("\"", "");
                 let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
                 let mut tmp_vs: Vec<String> = vec![];
                 for t in tmp_vl.iter() {
-                    let tm: String = t.to_string();
-                    let mut v_r = tm.as_str().replace("\\", "\\\\");
-                    v_r = v_r.replace("\"", "\\\"");
-                    tmp_vs.push( "\"".to_string() + &v_r + "\"");
+                    let mut v_r = t.to_string();
+                    v_r = v_r.replace("'", "''");
+                    tmp_vs.push("N'".to_string() + &v_r + "'");
                 }
                 tmp_vs.join(",")
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
-                let tmp_v = match vty {
-                    "&&str" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    _ => {
-                        v.to_string() + ""
-                    }
-                };
+                let mut tmp_v = v.to_string();
+                if m == "in" || m == "not_in" || m == "is_null" {
+
+                } else {
+                    tmp_v = match vty {
+                        "&&str" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        _ => {
+                            v.to_string() + ""
+                        }
+                    };
+                }
                 let k_re = _rename_field(k, main_table_change);
                 let p = match m {
                     ">" => k_re + " > " + tmp_v.as_str(),
@@ -151,8 +210,12 @@ macro_rules! msfind {
                 let j_string = match m {
                     "inner" => " INNER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "left" => " LEFT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "left_outer" => " LEFT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "right" => " RIGHT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "right_outer" => " RIGHT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "full" => " FULL JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "full_outer" => " FULL OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "cross" => " CROSS JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     _ => "".to_string()
                 };
                 j_string
@@ -161,8 +224,16 @@ macro_rules! msfind {
             fn _get_select(s: &str, main_table_change: &str) -> String {
                 let mut tmp_select = String::from("");
                 for v in s.split(",").collect::<Vec<&str>>().iter() {
-                    let tmpv = v.trim();
-                    tmp_select = tmp_select + _rename_field(tmpv, main_table_change).as_str() + ",";
+                    let mut is_distinct = false;
+                    let mut tmpv = v.to_string();
+                    if v.contains("DISTINCT ") || v.contains("distinct ") {
+                        is_distinct = true;
+                        tmpv = v.replace("DISTINCT ", "");
+                        tmpv = tmpv.replace("distinct ", "");
+                    }
+                    tmpv = tmpv.trim().to_string();
+                    let dis_str = if is_distinct {"DISTINCT "} else {""};
+                    tmp_select = tmp_select + dis_str + _rename_field(tmpv.as_str(), main_table_change).as_str() + ",";
                 }
                 tmp_select.pop();
                 tmp_select
@@ -399,7 +470,7 @@ macro_rules! msfind {
                 _limit_page = " ".to_string();
             }
 
-            let mut _order_by = String::from("");
+            let mut _order_by = String::from(" ORDER BY id ASC");
             $(
                 _order_by = _get_order_by($order_by, _table_change);
             )?
@@ -410,12 +481,30 @@ macro_rules! msfind {
                 _select = tmp_s.as_str();
             )?
 
+            let mut _group = String::default();
+            $(
+                _group = format!(" GROUP BY {}", $group);
+            )?
+
+            let mut _have = String::default();
+            $(
+                _have = format!(" HAVING {}", $have);
+            )?
+
+            let mut _group_order_by = String::from("");
+            $(
+                _group_order_by = _get_order_by($group_order_by, _table_change);
+            )?
+
             let sql = "SELECT ".to_string() + _select +
                 " FROM " + $t +
                 _join.as_str() +
                 where_r.as_str() +
                 _order_by.as_str() +
-                _limit_page.as_str();
+                _limit_page.as_str() +
+                _group.as_str() +
+                _have.as_str() +
+                _group_order_by.as_str();
 
             sql
         }

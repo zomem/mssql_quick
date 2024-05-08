@@ -7,231 +7,134 @@ pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        ms_run_vec, mscount, msdel, msfind, msget, msset, mssetmany, msupdate, msupdatemany,
-        EncryptionLevel, MssqlQuick,
-    };
+    use crate::{mscount, msdelmany, msfind, msupdatemany, EncryptionLevel, MssqlQuick};
     use serde::{Deserialize, Serialize};
 
-    #[derive(Serialize, Deserialize, Debug)]
-    pub struct MsssqlTest {
-        id: u32,
-        title: String,
-        content: Option<String>,
-        price: f32,
-        total: u32,
-        uid: u32,
-    }
-
-    #[derive(Serialize, Deserialize, Debug)]
-    pub struct MsssqlTestAdd {
-        title: String,
-        content: Option<String>,
-        price: f32,
-        uid: u32,
-    }
     const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+
+    // #[derive(Serialize, Deserialize, Debug)]
+    // struct Item {
+    //     title: String,
+    //     content: String,
+    //     price: f32,
+    //     total: u32,
+    //     uid: u32,
+    // }
+    #[derive(Serialize, Deserialize)]
+    struct Item {
+        id: u64,
+        content: String,
+        total: u32,
+    }
 
     #[tokio::test]
     async fn is_msset_ok() {
-        let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
+        let mut _client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
             .await
             .unwrap()
             .client;
 
-        let sqlset = msset!("for_test", {
-            "title": "这是一31113标题",
-            "content": r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#,
-            "price": 776,
-            "total": 122,
-            "uid": 23
-        });
+        // 事务临时解决办法：
+        // client.simple_query("BEGIN TRAN").await?;
+        // // deal with your business, do not panic or error out
+        // match result {
+        //   Ok(_) => client.simple_query("COMMIT").await?,
+        //   Err(_) => client.simple_query("ROLLBACK").await?,
+        // }
 
-        println!("set sql语句：{}", sqlset);
+        let vec_data = vec![
+            Item {
+                id: 7,
+                content: String::from("批量更新1"),
+                total: 0,
+            },
+            Item {
+                id: 8,
+                content: String::from("批量更新2"),
+                total: 0,
+            },
+        ];
 
-        // let res: Vec<MssqlQuickSet> = ms_run_vec(&mut client, sqlset).await.unwrap();
-        // println!("set返回：{:?}", res);
-        // println!("set返回：{:?}", res[0].id);
+        // 当前以 id 字段为查寻条件，更新 id 分别为7、8数据的content、total为对应的值。
+        let sql = msupdatemany!("for_test", "id", vec_data);
+        println!("33333::::::: {}", sql);
 
-        let sql2 = msset!("for_test", {
-            "title": "内容题目",
-            "content": "null",
-            "price": 776,
-            "total": 122,
-            "uid": 23
-        });
-        // let res: Vec<MssqlQuickSet> = ms_run_vec(&mut client, sql2).await.unwrap();
-        println!("set返回：{}", sql2);
-
-        // 批量更新
-        let slq_m = mssetmany!(
-            "for_test",
-            vec![
-                MsssqlTestAdd {
-                    title: "名字1".to_owned(),
-                    content: None,
-                    price: 12.3,
-                    uid: 50
-                },
-                MsssqlTestAdd {
-                    title: "名字2".to_owned(),
-                    content: Some("内容。。。".to_owned()),
-                    price: 32.3,
-                    uid: 50
-                },
-                MsssqlTestAdd {
-                    title: "名字3".to_owned(),
-                    content: Some("2389)d(ŐдŐ๑)🍉 .',".to_owned()),
-                    price: 32.3,
-                    uid: 50
-                },
-                MsssqlTestAdd {
-                    title: "名字4".to_owned(),
-                    content: None,
-                    price: 32.3,
-                    uid: 50
-                },
-            ]
-        );
-
-        println!(" \n set_many ;:: sql ::::  {} \n", slq_m);
-        // let res: Vec<serde_json::Value> = ms_run_vec(&mut client, slq_m).await.unwrap();
-        // println!("set_many返回：{:?}", res);
-
-        assert!(true)
-    }
-
-    #[tokio::test]
-    async fn is_msget_ok() {
-        let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
-            .await
-            .unwrap()
-            .client;
-
-        let sql = msget!("for_test", 1080, "*");
-        println!("\nmsget sql 返回：{}", sql);
-        let sql2 = msget!("for_test", {"uid": 7}, "*");
-        println!("msget sql2 返回：{}", sql2);
-        let sql3 = msget!("for_test", 2, "id, title, content as c, uid, price");
-        println!("msget sql3 返回：{}", sql3);
-        let sql4 = msget!("for_test", {"title": "内容题目"}, "id, title, content as c, uid, price");
-        println!("msget sql4 返回：{}", sql4);
-        let sql5 = msget!("for_test", {
-            "content": r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#
-        }, "id, content as c, uid, price");
-        println!("msget sql5 返回：{}", sql5);
-
-        #[derive(Serialize, Deserialize, Debug)]
-        pub struct MsssqlChange {
-            id: u32,
-            title: String,
-            c: Option<String>,
-            price: f32,
-            uid: u32,
-        }
-        let data: Vec<MsssqlChange> = ms_run_vec(&mut client, sql4).await.unwrap();
-        println!("msget data 结果：{:?}", data);
-
-        assert!(true)
-    }
-
-    #[tokio::test]
-    async fn is_msfind_ok() {
-        // let res2: Vec<MsssqlTest> =
-        //     ms_run_vec(&mut client, String::from("SELECT top 8 * FROM for_test;"))
-        //         .await
-        //         .unwrap();
-        // println!("res2  \n   {:#?} \n", res2);
-        assert!(true)
-    }
-
-    #[tokio::test]
-    async fn is_del_ok() {
-        let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
-            .await
-            .unwrap()
-            .client;
-
-        let sql = msdel!("for_test", 1096);
-        let sql = msdel!("for_test", {"content": "🍉"});
-
-        let res: Vec<serde_json::Value> = ms_run_vec(&mut client, sql).await.unwrap();
-        println!("删除：{:?}", res);
-
-        assert!(true)
-    }
-
-    #[tokio::test]
-    async fn is_update_ok() {
-        let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
-            .await
-            .unwrap()
-            .client;
-
-        let sql = msupdate!("for_test", {"uid": 23}, {
-            "title": "标题",
-            "price": 199.999,
-            "content": "(ŐдŐ๑)🍉 .',"
-        });
-        let sql = msupdate!("for_test", {"uid": 23}, {
-            "title": ["set", "9992ad"],
-            "total": ["incr", 10],
-        });
-        println!("更新返回sql：{}", sql);
-        let up_res: Vec<serde_json::Value> = ms_run_vec(&mut client, sql).await.unwrap();
-        println!("更新返回：{:?}", up_res);
-
-        // 批量更新
-        let ups_sql = msupdatemany!(
-            "for_test",
-            "uid,+price",
-            vec![
-                MsssqlTestAdd {
-                    title: "名44444字2aaa".to_owned(),
-                    content: Some("内77777容。。。".to_owned()),
-                    price: 2.,
-                    uid: 50
-                },
-                MsssqlTestAdd {
-                    title: "名字333".to_owned(),
-                    content: Some("2389888888888888🍉🍉)d(ŐдŐ๑)🍉 .',".to_owned()),
-                    price: 100.,
-                    uid: 51
-                },
-            ]
-        );
-
-        println!("\n\n 批量更新ups： {} \n\n", ups_sql);
-        let up_res2: Vec<serde_json::Value> = ms_run_vec(&mut client, ups_sql).await.unwrap();
-        println!(" {:?} \n\n", up_res2);
-        assert!(true)
-    }
-
-    #[tokio::test]
-    async fn is_find_ok() {
-        let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
-            .await
-            .unwrap()
-            .client;
-
-        let sql = msfind!("for_test", {
+        let _sql = msfind!("feedback as fb", {
             j0: ["uid", "inner", "users.id"],
-            p0: ["uid", ">", 0],
-            r: "p0",
-            page: 1,
-            limit: 10,
-            order_by: "-price",
-            select: "content, price, users.nickname",
+            j1: ["uid", "inner", "users as u2.id"], // 对表重命名
+            j2: ["book_id", "left", "book.id"],
+            j3: ["book.uid", "right", "users.id"],
+            p0: ["num", ">", 0],
+            p1: ["d", "=", "这是的"],
+            p2: ["users.user_niae", "like", "%aa%"],
+            p3: ["ppp", "is_null", true],
+            p4: ["u2.price", ">", 1],
+            p5: ["u2.price", "like", "aa%"],
+            p6: ["u2.price", "in", "zzz,nnn"],
+            p7: ["u2.price", "not_in", "zm"],
+            p8: ["f", "=", "32"],
+            p9: ["u2.price", "is_null", true],
+            r: "p8 && (p0 || p3) && (p1 && (p2 || p4))",  // 为p的组合规则
+            page: 3,  // 第几页
+            limit: 5, // 每页数量
+            order_by: "-created_at,   time, -users.updated_at", // 排序
+            select: "id, name,   avatar_url as aurl,users.c, u2.name", // 字段选择
         });
-        println!("\n\n 查寻sql： {}  \n", sql);
 
-        let sql = mscount!("for_test", {
-            p0: ["uid", ">", 20],
-            r: "p0",
+        let des_str = r#"#@!@$$^&^%&&#\\,abc,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',ddd"#;
+        // let sql = msfind!("for_test", {
+        //     p0: ["content", "=", des_str],
+        //     r: "p0",
+        //     select: "SUM(age)",
+        //     group: "age",
+        //     have: "age > 0",
+        //     group_order_by: "-age",
+        // });
+        // let sql = msfind!("for_test", {
+        //     p0: ["content", "=", "abc"],
+        //     r: "p0",
+        //     select: "DISTINCT name",
+        // });
+
+        // let sql = msget!("for_test", 6, "id,content as cc");
+        // let sql = msget!("for_test", {"uid": 3}, "*");
+        //
+        let _sql = mscount!("for_test", {});
+        let sql = msdelmany!("for_test", {
+            p0: ["content", "in", des_str],
+            r: "p0",  // 为p的组合规则
         });
+        println!("22322222::::::: {}", sql);
 
-        let res: Vec<serde_json::Value> = ms_run_vec(&mut client, sql).await.unwrap();
-        println!("\n\n 查寻返回：{:?}", res);
+        // let vec_data = vec![
+        //     Item {
+        //         title: "名字".to_string(),
+        //         content: "null".to_string(),
+        //         price: 32.23,
+        //         total: 12,
+        //         uid: 3,
+        //     },
+        //     Item {
+        //         title: "名字2".to_string(),
+        //         content: String::from(
+        //             r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#,
+        //         ),
+        //         price: 12.2,
+        //         total: 1,
+        //         uid: 2,
+        //     },
+        // ];
+        // let sql = mssetmany!("for_test", vec_data);
+        // println!("mmmsql::::::: {}", sql);
+        // let des_str =
+        //     r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
+        // let sql = msset!("users", {
+        //     "nickname": "张三",
+        //     "age": 3,
+        //     "content": "null",   // null 表示该字段为NULL
+        //     "des": des_str,
+        // });
+        // println!("ssssql::::::: {}", sql);
 
         assert!(true)
     }

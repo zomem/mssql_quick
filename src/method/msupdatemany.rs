@@ -1,5 +1,11 @@
 /// 1.单个条件，批量更新数据 ，返回 sql 语句。
 /// ```
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msupdatemany, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
 /// #[derive(Serialize, Deserialize)]
 /// struct Item {
 ///     id: u64,
@@ -7,34 +13,61 @@
 ///     total: u32,
 /// }
 /// let vec_data = vec![
-///     Item {id: 1, content: String::from("aaa"), total: 12},
-///     Item {id: 2, content: String::from("bb"), total: 1},
+///     Item {id: 7, content: String::from("批量更新11"), total: 10},
+///     Item {id: 8, content: des_str.to_string(), total: 10},
 /// ];
-/// let sql = msupdatemany!("content", "id", vec_data);
-/// // 当前以 id 字段为查寻条件，更新 id 分别为 1、2 的数据的content、total为对应的值。
+/// // 当前以 id 字段为查寻条件，更新 id 分别为7、8数据的content、total为对应的值。
+/// let sql = msupdatemany!("for_test", "id", vec_data);
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
-///
-///
-/// 2.多个条件，更新数据，返回 sql 语句。
+/// 2.多个条件，批量更新数据 ，返回 sql 语句。
 /// ```
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msupdatemany, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
 /// #[derive(Serialize, Deserialize)]
-/// struct Item {
-///     name: String,
+/// struct Item<'a> {
+///     title: &'a str,
 ///     content: String,
 ///     total: u32,
 /// }
 /// let vec_data = vec![
-///     Item {name: "a", content: String::from("aaa"), total: 12},
-///     Item {name: "b", content: String::from("bb"), total: 1},
+///     Item {title: "a", content: String::from("aaa"), total: 32},
+///     Item {title: "b", content: des_str.to_string(), total: 22},
 /// ];
-/// let sql = msyupdatemany!("content", "name,total", vec_data);
-/// // 当前以 name && total 字段为查寻条件，更新 name 和 total 分别为 "a" && 12 与 ”b“ && 1 的数据的content为对应的值。
+/// // 当前以 title && total 字段为查寻条件，"a" && 12 与 ”b“ && 1 的数据content为对应的值。
+/// let sql = msupdatemany!("for_test", "title,total", vec_data);
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
-/// 3.对某个字段进行原子性更新，返回 sql 语句。
+///
+/// 3.对特定字段进行原子性批量更新数据，返回 sql 语句。
 /// ```
-/// // 要行进 incr 的更新的字段，用+号填写。
-/// // 如下，表示以name,total为查寻条件，price字段要进行incr更新操作(price 不会作为查寻条件)。
-/// let sql = msupdatemany!("content", "name,total,+price", vec_data);
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msupdatemany, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
+/// #[derive(Serialize, Deserialize)]
+/// struct Item<'a> {
+///     title: &'a str,
+///     price: f32,
+///     total: u32,
+/// }
+/// let vec_data = vec![
+///     Item {title: "aa", price: 100., total: 1},
+///     Item {title: "bb", price: 200., total: 1},
+/// ];
+/// // 需要行进 incr 更新的字段，用+号填写。
+/// // 如下，表示以 title,total为查寻条件，price 字段要进行 incr 更新操作(注：price 不会作为查寻条件)。
+/// let sql = msupdatemany!("for_test", "title,total,+price", vec_data);
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
 #[macro_export]
 macro_rules! msupdatemany {
@@ -60,6 +93,7 @@ macro_rules! msupdatemany {
         let table = $t.clone().to_owned();
 
         let i_data = query_field
+            .clone()
             .into_iter()
             .map(|x| format!(" {}.{} = {}.{} ", table, x, table_upmj, x))
             .collect::<Vec<String>>()
@@ -69,44 +103,33 @@ macro_rules! msupdatemany {
         let mut select_vec: Vec<String> = vec![];
 
         for i in 0..$v.len() {
-            let mut item_str = serde_json::to_string(&$v[i]).unwrap();
-            item_str.pop();
-            item_str.remove(0);
-            item_str.push(',');
-            item_str.push('"');
-            item_str.insert(0, ',');
-            // ",\"content\":\"aaa\",\"total\":12,\"uid\":3,\"des\":\"nn\",\""
+            let item_str = serde_json::to_string(&$v[i]).unwrap();
+            let o: serde_json::Value = serde_json::from_str(&item_str).unwrap();
+
             // SELECT  1 AS id, 11 AS code, 'nam' AS name, 44 AS book
-            let mut field_list: Vec<String> = vec![];
+            let mut field_list: Vec<&str> = vec![];
             let mut select_item: Vec<String> = vec![];
 
-            let re = regex::Regex::new(",\"([0-9a-zA-Z_]+?)\":").unwrap();
-            for cap in re.captures_iter(item_str.as_str()) {
-                field_list.push((&cap[1]).to_string());
-            }
-
-            let re2 = regex::Regex::new("\":(.*?),\"").unwrap();
-            let mut n = 0;
-            for cap2 in re2.captures_iter(item_str.as_str()) {
-                let temp_v = &cap2[1];
-                let mut value_cap;
-                if temp_v == "null" {
-                    value_cap = "NULL".to_owned();
-                } else {
-                    value_cap = temp_v.to_string();
-                    if let Some(c) = temp_v.chars().next() {
-                        if c == '"' {
-                            let mut v_r = temp_v.to_string();
-                            v_r.remove(0);
-                            v_r.pop();
-                            v_r = v_r.replace("'", "''");
-                            value_cap = "N'".to_owned() + &v_r + "'";
-                        }
-                    }
+            for key in o.as_object().unwrap().keys() {
+                if i == 0 {
+                    field_list.push(&key);
                 }
 
-                select_item.push((&value_cap).to_string() + " AS " + field_list[n].as_str());
-                n = n + 1;
+                let temp_v = &o[key];
+                if (temp_v.is_number()) {
+                    select_item.push(temp_v.to_string() + " AS " + &key);
+                } else if temp_v.is_null() {
+                    select_item.push("NULL".to_owned() + " AS " + &key);
+                } else if temp_v.is_string() {
+                    let t_v = temp_v.as_str().unwrap();
+                    if t_v == "null" {
+                        select_item.push("NULL".to_owned() + " AS " + &key);
+                    } else {
+                        let mut v_r = t_v.to_string();
+                        v_r = v_r.replace("'", "''");
+                        select_item.push("N'".to_owned() + &v_r + "'" + " AS " + &key);
+                    }
+                }
             }
 
             select_vec.push("SELECT ".to_string() + select_item.join(",").as_str());
@@ -115,9 +138,12 @@ macro_rules! msupdatemany {
                 field_equl = field_list
                     .iter()
                     .map(|x| {
+                        if query_field.contains(&x.to_string()) {
+                            return "".to_owned();
+                        }
                         let mut is_incr = false;
                         for c in 0..incr_field.len() {
-                            if incr_field[c].contains(x.as_str()) {
+                            if incr_field[c].contains(x) {
                                 is_incr = true;
                                 break;
                             }
@@ -125,25 +151,20 @@ macro_rules! msupdatemany {
                         if is_incr {
                             table.clone()
                                 + "."
-                                + x.as_str()
+                                + x
                                 + " = "
                                 + table.clone().as_str()
                                 + "."
-                                + x.as_str()
+                                + x
                                 + " + "
                                 + table_upmj.as_str()
                                 + "."
-                                + x.as_str()
+                                + x
                         } else {
-                            table.clone()
-                                + "."
-                                + x.as_str()
-                                + " = "
-                                + table_upmj.as_str()
-                                + "."
-                                + x.as_str()
+                            table.clone() + "." + x + " = " + table_upmj.as_str() + "." + x
                         }
                     })
+                    .filter(|o| o != &String::default())
                     .collect();
             }
         }

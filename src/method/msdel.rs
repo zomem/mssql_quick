@@ -1,17 +1,19 @@
-/// 通过id，删除数据 ，返回 sql 语句。
+/// 删除数据 ，返回 sql 语句。
 /// ```
-/// let sql = msdel!("feedback", 2);  // where id = 2
-/// // 执行
-/// ms_run_vec(&mut client, sql).await.unwrap();
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msdel, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// // 通过 id 删除（删除id为1066的数据）
+/// let sql = msdel!("for_test", 1066);
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
 ///
-/// ```
-/// 通过指定字段的值，删除数据 ，返回 sql 语句。
-/// ```
-/// // 删除 uid = 12 的数据
-/// let sql = msdel!("feedback", {"uid": 12});
-/// // 执行
-/// ms_run_vec(&mut client, sql).await.unwrap();
-///
+/// // 通过指定字段的值，删除全部数据
+/// // 删除 uid = 23 的数据 （注：如果有多条，会全部删除）
+/// let sql = msdel!("for_test", {"uid": 23});
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
 #[macro_export]
 macro_rules! msdel {

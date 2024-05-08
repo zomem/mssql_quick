@@ -1,13 +1,12 @@
-
-
 ### mssql 数据库连接方法封装
+
 ```rust
 use mssql_quick::{
     ms_run_vec, mscount, msdel, msfind, msget, msset, mssetmany, msupdate, msupdatemany,
     EncryptionLevel, MssqlQuick, MssqlQuickSet,
 };
 
-const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
 
 let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
     .await
@@ -15,12 +14,11 @@ let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
     .client;
 ```
 
-
 ### mssql sql执行
 
-|  运行sql   | 说明  |
-|  ----  | ----  |
-| ms_run_vec  | 执行sql，返回vec类型数据，无数据则返回`vec![]` |
+| 运行sql    | 说明                                           |
+| ---------- | ---------------------------------------------- |
+| ms_run_vec | 执行sql，返回vec类型数据，无数据则返回`vec![]` |
 
 ```rust
 let id: u64 = ms_run_vec(&mut client, sql).unwrap();
@@ -29,25 +27,23 @@ let id: u64 = ms_run_vec(&mut client, sql).unwrap();
 let data: Vec<serde_json::Value> = ms_run_vec(&mut conn, sql).unwrap();
 ```
 
-
-
 ### sql快捷生成
 
-|  sql快捷生成方法   | 说明  |
-|  ----  | ----  |
-| mscount  | 返回计数的sql |
-| msdel  | 删除一条数据的sql |
-| msdelmany  | 批量删除数据的sql |
-| msfind  | 查寻数据的sql |
-| msget  | 查寻一条数据的sql |
-| msset  | 新增一条数据的sql |
-| mssetmany  | 批量新增数据的sql |
-| msupdate  | 更新一条数据的sql |
-| msupdatemany  | 批量更新数据的sql |
-| 自定义  | 可以直接写自己的sql语句 |
-
+| sql快捷生成方法 | 说明                    |
+| --------------- | ----------------------- |
+| mscount         | 返回计数的sql           |
+| msdel           | 删除一条数据的sql       |
+| msdelmany       | 批量删除数据的sql       |
+| msfind          | 查寻数据的sql           |
+| msget           | 查寻一条数据的sql       |
+| msset           | 新增一条数据的sql       |
+| mssetmany       | 批量新增数据的sql       |
+| msupdate        | 更新一条数据的sql       |
+| msupdatemany    | 批量更新数据的sql       |
+| 自定义          | 可以直接写自己的sql语句 |
 
 以下内容，则为常用sql的快捷方法
+
 ```rust
 
 // 新增一条数据

@@ -1,33 +1,36 @@
-/// 批量删除数据，返回sql
+/// 批量删除数据，返回 sql 语句
 ///
 /// 完整参数如下，注意，参数可以省略，但顺序固定。
-/// ```
 ///
-/// j*: 为 join 操作，["字段", "方法", "字段2"]， 主表"字段"，可以只写字段名
-/// j*方法有：`inner、left、right、full`
-/// p*: 为查寻操作，["字段", "方法", "参数"],  主表"字段"，可以只写字段名
-/// p*查寻方法有：`>、<、=、!=、<=、>=、like、in、not_in、is_null`
+/// p*: 为查寻操作，【"字段", "方法", "参数"】
+/// 方法有：`>、<、=、!=、<=、>=、like、in、not_in、is_null`
 ///
-/// ```
+/// r: 为p的组合条件(必填)，如：`p0`、`p1 && (p0 || p2)`
 ///
 /// ```
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msdelmany, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
 /// // 重命名用 as 操作
-/// msdelmany!("feedback as fb", {
+///
+/// let sql = msdelmany!("for_test", {
+///    p0: ["id", ">", 1000],
+///    r: "p0",
+/// });
+/// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
+///
+/// msdelmany!("feedback", {
 ///     p0: ["num", ">", 0],
 ///     p1: ["d", "=", "这是的"],
 ///     p2: ["users.user_niae", "like", "%aa%"],
 ///     p3: ["ppp", "is_null", true],
-///     p4: ["u2.price", ">", 1],
-///     p5: ["u2.price", "like", "aa%"],
-///     p6: ["u2.price", "in", "zzz,nnn"],
-///     p7: ["u2.price", "not_in", "zm"],
-///     p8: ["f", "=", "32"],
-///     p9: ["u2.price", "is_null", true],
-///     r: "p8 && (p0 || p3) && (p1 && (p2 || p4))",  // 为p的组合规则
-///     limit: 5, // 每页数量
-///     order_by: "-created_at,   time, -users.updated_at", // 排序
+///     p4: ["ppp", "is_null", true],
+///     r: "(p0 || p3) && (p1 && (p2 || p4))",  // 为p的组合规则
 /// });
-///
+/// # });
+/// ```
 #[macro_export]
 macro_rules! msdelmany {
     ($t:expr, {
@@ -42,8 +45,6 @@ macro_rules! msdelmany {
         $(p8: [$k8:tt, $m8:tt, $v8:expr],)?
         $(p9: [$k9:tt, $m9:tt, $v9:expr],)?
         $(r: $r:expr,)?
-        $(limit: $limit:expr,)?
-        $(order_by: $order_by:expr,)?
     }) => {
         {
             fn _type_of<T>(_: T) -> &'static str {
@@ -81,38 +82,41 @@ macro_rules! msdelmany {
                 tmp_name
             }
             fn _get_p_in(tmp_v: String) -> String {
-                let tmp_v = tmp_v.replace("\"", "");
                 let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
                 let mut tmp_vs: Vec<String> = vec![];
                 for t in tmp_vl.iter() {
-                    let tm: String = t.to_string();
-                    let mut v_r = tm.as_str().replace("\\", "\\\\");
-                    v_r = v_r.replace("\"", "\\\"");
-                    tmp_vs.push( "\"".to_string() + &v_r + "\"");
+                    let mut v_r = t.to_string();
+                    v_r = v_r.replace("'", "''");
+                    tmp_vs.push("N'".to_string() + &v_r + "'");
                 }
                 tmp_vs.join(",")
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
-                let tmp_v = match vty {
-                    "&&str" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    _ => {
-                        v.to_string() + ""
-                    }
-                };
+                let mut tmp_v = v.to_string();
+                if m == "in" || m == "not_in" || m == "is_null" {
+
+                } else {
+                    tmp_v = match vty {
+                        "&&str" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        _ => {
+                            v.to_string() + ""
+                        }
+                    };
+                }
                 let k_re = _rename_field(k, main_table_change);
                 let p = match m {
                     ">" => k_re + " > " + tmp_v.as_str(),
@@ -321,25 +325,9 @@ macro_rules! msdelmany {
                 where_r = " WHERE ".to_string() + qq_all.as_str();
             }
 
-            let mut _limit: u32 = 0;
-            $( _limit = $limit; )?
-            let mut _limit_page = String::from("");
-            if _limit > 0 {
-                _limit_page = " ROWS FETCH NEXT ".to_string() + _limit.to_string().as_str() + " ROWS ONLY";
-            } else {
-                _limit_page = " ".to_string();
-            }
-
-            let mut _order_by = String::from("");
-            $(
-                _order_by = _get_order_by($order_by, _table_change);
-            )?
-
             let sql = "DELETE ".to_string() +
-                " FROM " + $t +
-                where_r.as_str() +
-                _order_by.as_str() +
-                _limit_page.as_str();
+                "FROM " + $t +
+                where_r.as_str();
 
             sql
         }

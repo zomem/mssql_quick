@@ -1,15 +1,36 @@
-/// 计数 ，返回 sql 语句，参数同 find 类似。
+/// 计数 ，返回 sql 语句
+///
+/// 完整参数如下，参数同 find 类似。注意，参数可以省略，但顺序固定。
+///
+/// j*: 为 join 操作，【"字段1", "方法", "字段2"】
+/// 方法有：`inner、left、left_outer、right、right_outer、full、full_outer、cross`
+///
+/// p*: 为查寻操作，【"字段", "方法", "参数"】
+/// 方法有：`>、<、=、!=、<=、>=、like、in、not_in、is_null`
+///
+/// r: 为p的组合条件(必填)，如：`p0`、`p1 && (p0 || p2)`
+///
 /// ```
-/// use mssql_quick::MssqlQuickCount;
+/// # use serde::{Deserialize, Serialize};
+/// use mssql_quick::{mscount, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickCount};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
 ///
-/// let res_count: Vec<MssqlQuickCount> = ms_run_vec(&mut client, mscount!("feedback", {})).await.unwrap();
-///
-///
-/// // 条件计数
-/// mscount!(table, {
+/// let sql = mscount!("for_test", {});
+/// let sql = mscount!("for_test", {
 ///     p0: ["price", ">", 100],
 ///     r: "p0",
 /// });
+/// let res_count: Vec<MssqlQuickCount> = ms_run_vec(&mut client, sql).await.unwrap();
+///
+/// // 其他用法
+/// let sql = mscount!("for_test", {
+///    p0: ["price", ">", 100],
+///    r: "p0",
+///    distinct: "title",
+/// });
+/// # });
 /// ```
 #[macro_export]
 macro_rules! mscount {
@@ -29,6 +50,7 @@ macro_rules! mscount {
         $(p8: [$k8:tt, $m8:tt, $v8:expr],)?
         $(p9: [$k9:tt, $m9:tt, $v9:expr],)?
         $(r: $r:expr,)?
+        $(distinct: $distinct:expr,)?
     }) => {
         {
             fn _type_of<T>(_: T) -> &'static str {
@@ -66,38 +88,41 @@ macro_rules! mscount {
                 tmp_name
             }
             fn _get_p_in(tmp_v: String) -> String {
-                let tmp_v = tmp_v.replace("\"", "");
                 let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
                 let mut tmp_vs: Vec<String> = vec![];
                 for t in tmp_vl.iter() {
-                    let tm: String = t.to_string();
-                    let mut v_r = tm.as_str().replace("\\", "\\\\");
-                    v_r = v_r.replace("\"", "\\\"");
-                    tmp_vs.push( "\"".to_string() + &v_r + "\"");
+                    let mut v_r = t.to_string();
+                    v_r = v_r.replace("'", "''");
+                    tmp_vs.push("N'".to_string() + &v_r + "'");
                 }
                 tmp_vs.join(",")
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
-                let tmp_v = match vty {
-                    "&&str" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    "&&alloc::string::String" => {
-                        let mut v_r = v.to_string();
-                        v_r = v_r.replace("'", "''");
-                        "N'".to_string() + &v_r + "'"
-                    },
-                    _ => {
-                        v.to_string() + ""
-                    }
-                };
+                let mut tmp_v = v.to_string();
+                if m == "in" || m == "not_in" || m == "is_null" {
+
+                } else {
+                    tmp_v = match vty {
+                        "&&str" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        "&&alloc::string::String" => {
+                            let mut v_r = v.to_string();
+                            v_r = v_r.replace("'", "''");
+                            "N'".to_string() + &v_r + "'"
+                        },
+                        _ => {
+                            v.to_string() + ""
+                        }
+                    };
+                }
                 let k_re = _rename_field(k, main_table_change);
                 let p = match m {
                     ">" => k_re + " > " + tmp_v.as_str(),
@@ -124,8 +149,12 @@ macro_rules! mscount {
                 let j_string = match m {
                     "inner" => " INNER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "left" => " LEFT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "left_outer" => " LEFT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "right" => " RIGHT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "right_outer" => " RIGHT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     "full" => " FULL JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "full_outer" => " FULL OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "cross" => " CROSS JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     _ => "".to_string()
                 };
                 j_string
@@ -327,7 +356,12 @@ macro_rules! mscount {
                 where_r = " WHERE ".to_string() + qq_all.as_str();
             }
 
-            let sql = "SELECT count(*) as mssql_quick_count".to_string() +
+            let mut _distinct = String::from("*");
+            $(
+                _distinct = format!("DISTINCT {}", $distinct);
+            )?
+
+            let sql = "SELECT count(".to_string() + _distinct.as_str() + ") as mssql_quick_count" +
                 " FROM " + $t +
                 _join.as_str() +
                 where_r.as_str();

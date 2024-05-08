@@ -1,12 +1,19 @@
 /// 新增数据 ，返回 sql 语句。
-/// 下面示例中，user 为表名，，name、num 为字段名，，后面为新增的值。
+///
 /// ```
+/// # use mssql_quick::{msset, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
 /// let sql = msset!("users", {
-///     "name": &string_t,
-///     "num": 882,
+///     "nickname": "张三",
+///     "age": 3,
 ///     "content": "null",   // null 表示该字段为NULL
+///     "des": des_str,
 /// });
-/// ms_run_vec(&mut client, sql).await.unwrap();
+/// let set_res: Vec<MssqlQuickSet> = ms_run_vec(&mut client, sql).await.unwrap();
+/// # });
 /// ```
 #[macro_export]
 macro_rules! msset {

@@ -1,21 +1,23 @@
-/// 获取一条数据，一定要记录传`select`的字段且不能为*
+/// 获取一条数据，返回 sql 语句
 ///
 /// ```
-/// 根据 id 查寻
-/// // 查寻 id =3 3 的数据
-/// let sql1 = msget!("feedback", 33, "id,content as cc");
+/// # use serde::{Deserialize, Serialize};
+/// # use mssql_quick::{msget, ms_run_vec, MssqlQuick, EncryptionLevel, MssqlQuickSet};
+/// # const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
+/// # tokio_test::block_on(async {
+/// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
+/// // 查寻 id 为 6 的数据
+/// let sql = msget!("for_test", 6, "id,content as cc");
 /// #[derive(Serialize, Deserialize, Debug)]
-/// struct Feedback {
+/// struct Item {
 ///     id: u64,
-///     cc: String
+///     cc: Option<String>
 /// }
-/// let res_get: Vec<Feedback> = ms_run_vec(&mut client, sql1).await.unwrap();
+/// let res: Vec<Item> = ms_run_vec(&mut client, sql).await.unwrap();
 ///
-///
-/// 根据指定字段查寻
-/// // 查寻 uid = 32 的数据
-/// msget!("table", {"uid": 32}, "*")
-///
+/// // 根据指定字段查寻 如：查寻 uid = 3 的数据
+/// let sql = msget!("table", {"uid": 3});
+/// # });
 /// ```
 ///
 #[macro_export]
