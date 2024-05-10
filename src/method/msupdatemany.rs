@@ -103,8 +103,8 @@ macro_rules! msupdatemany {
         let mut select_vec: Vec<String> = vec![];
 
         for i in 0..$v.len() {
-            let item_str = serde_json::to_string(&$v[i]).unwrap();
-            let o: serde_json::Value = serde_json::from_str(&item_str).unwrap();
+            let item_str = $crate::to_string(&$v[i]).unwrap();
+            let o: $crate::Value = $crate::from_str(&item_str).unwrap();
 
             // SELECT  1 AS id, 11 AS code, 'nam' AS name, 44 AS book
             let mut field_list: Vec<&str> = vec![];

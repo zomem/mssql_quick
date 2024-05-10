@@ -21,8 +21,6 @@ let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported)
 | ms_run_vec | 执行sql，返回vec类型数据，无数据则返回`vec![]` |
 
 ```rust
-let id: u64 = ms_run_vec(&mut client, sql).unwrap();
-
 // 执行 sql 语句
 let data: Vec<serde_json::Value> = ms_run_vec(&mut conn, sql).unwrap();
 ```
@@ -91,12 +89,12 @@ let res_get: Vec<Feedback> = ms_run_vec(&mut client, sql1).await.unwrap();
 let sql_f = msfind!("for_test", {
     p0: ["uid", ">", 330],
     r: "p0",
-    select: "*",
+    select: "id,content as cc",
 });
 let res_find: Vec<Feedback> = ms_run_vec(&mut client, sql_f).await.unwrap();
 
 // 获取计数
-let res_count: Vec<MysqlQuickCount> = ms_run_vec(&mut client, mscount!("for_test", {})).await.unwrap();
+let res_count: Vec<MssqlQuickCount> = ms_run_vec(&mut client, mscount!("for_test", {})).await.unwrap();
 
 // 自定义查寻
 let list: Vec<serde_json::Value> =

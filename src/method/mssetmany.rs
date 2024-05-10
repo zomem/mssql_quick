@@ -41,8 +41,8 @@ macro_rules! mssetmany {
         let mut field_name = " (".to_string();
         let mut value = "".to_string();
         for i in 0..$v.len() {
-            let item_str = serde_json::to_string(&$v[i]).unwrap();
-            let o: serde_json::Value = serde_json::from_str(&item_str).unwrap();
+            let item_str = $crate::to_string(&$v[i]).unwrap();
+            let o: $crate::Value = $crate::from_str(&item_str).unwrap();
             value = value + " (";
             for key in o.as_object().unwrap().keys() {
                 if i == 0 {

@@ -1,6 +1,9 @@
 mod method;
 pub use method::*;
 
+pub use regex::Regex;
+pub use serde_json::{from_str, to_string, Value};
+
 pub use tiberius::{error::Error, Client, ColumnType, Config};
 pub use tokio::net::TcpStream;
 pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};

@@ -53,6 +53,7 @@ macro_rules! mscount {
         $(distinct: $distinct:expr,)?
     }) => {
         {
+            use $crate::Regex;
             fn _type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
@@ -274,7 +275,7 @@ macro_rules! mscount {
             let mut _list: Vec<&str> = vec![];
             $(
                 _r = $r.split_whitespace().collect();
-                let re1 = regex::Regex::new(r"(\()|(\))").unwrap();
+                let re1 = Regex::new(r"(\()|(\))").unwrap();
                 _r = re1.replace_all(_r.as_str(), "#$1$2#").to_string();
                 _list = _r.split("#").collect();
             )?
@@ -296,7 +297,7 @@ macro_rules! mscount {
                             }
                         }
                         //进行and,or
-                        let re2 = regex::Regex::new(r"(&&)|(\|\|)").unwrap();
+                        let re2 = Regex::new(r"(&&)|(\|\|)").unwrap();
                         let top_re2 = re2.replace_all(top_brackets.as_str(), "#$1$2#");
                         let temp_arr: Vec<&str> = top_re2.split("#").collect();
                         // [p9, &&, p8, ||, p32]
@@ -331,7 +332,7 @@ macro_rules! mscount {
                     }
                 }
                 let temp_arr_str2 = String::from_iter(stack);
-                let re3 = regex::Regex::new(r"(&&)|(\|\|)").unwrap();
+                let re3 = Regex::new(r"(&&)|(\|\|)").unwrap();
                 let top_re3 = re3.replace_all(temp_arr_str2.as_str(), "#$1$2#");
                 let temp_arr2: Vec<&str> = top_re3.split("#").collect();
 
