@@ -1,4 +1,8 @@
-use tiberius::{error::Error, time::chrono::NaiveDateTime, Client, ColumnType, Config};
+use tiberius::{
+    error::Error,
+    time::chrono::{NaiveDate, NaiveDateTime, NaiveTime},
+    Client, ColumnType, Config,
+};
 use tokio::net::TcpStream;
 use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
@@ -74,7 +78,7 @@ where
                         }
                     }
                 }
-                ColumnType::Bit => {
+                ColumnType::Bit | ColumnType::Bitn => {
                     let val: Option<bool> = row.get(f_name);
                     match val {
                         Some(v) => {
@@ -183,7 +187,11 @@ where
                         }
                     }
                 }
-                ColumnType::Float8 | ColumnType::Money => {
+                ColumnType::Float8
+                | ColumnType::Money
+                | ColumnType::Floatn
+                | ColumnType::Decimaln
+                | ColumnType::Numericn => {
                     let val: Option<f64> = row.get(f_name);
                     match val {
                         Some(v) => {
@@ -194,8 +202,38 @@ where
                         }
                     }
                 }
-                ColumnType::Datetimen | ColumnType::Datetime2 | ColumnType::Datetime => {
+                ColumnType::Datetimen
+                | ColumnType::Datetime4
+                | ColumnType::Datetime2
+                | ColumnType::Datetime
+                | ColumnType::DatetimeOffsetn => {
                     let val: Option<NaiveDateTime> = row.get(index);
+                    match val {
+                        Some(v) => {
+                            let date_str = v.to_string();
+                            let v_c = serde_json::to_string(&date_str)?;
+                            item += format!(r#""{}":{},"#, f_name, v_c).as_str();
+                        }
+                        None => {
+                            item += format!(r#""{}":null,"#, f_name).as_str();
+                        }
+                    }
+                }
+                ColumnType::Daten => {
+                    let val: Option<NaiveDate> = row.get(index);
+                    match val {
+                        Some(v) => {
+                            let date_str = v.to_string();
+                            let v_c = serde_json::to_string(&date_str)?;
+                            item += format!(r#""{}":{},"#, f_name, v_c).as_str();
+                        }
+                        None => {
+                            item += format!(r#""{}":null,"#, f_name).as_str();
+                        }
+                    }
+                }
+                ColumnType::Timen => {
+                    let val: Option<NaiveTime> = row.get(index);
                     match val {
                         Some(v) => {
                             let date_str = v.to_string();
