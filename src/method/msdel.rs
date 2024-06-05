@@ -35,13 +35,8 @@ macro_rules! msdel {
             _ => "".to_string(),
         };
 
-        let sql: String = "(DELETE FROM ".to_string()
-            + $t
-            + " WHERE "
-            + keys.as_str()
-            + "="
-            + values.as_str()
-            + ")";
+        let sql: String =
+            "DELETE FROM ".to_string() + $t + " WHERE " + keys.as_str() + "=" + values.as_str();
 
         sql
     }};
@@ -63,7 +58,7 @@ macro_rules! msdel {
             _ => "".to_string(),
         };
 
-        let sql: String = "(DELETE FROM ".to_string() + $t + " WHERE id=" + values.as_str() + ")";
+        let sql: String = "DELETE FROM ".to_string() + $t + " WHERE id=" + values.as_str();
 
         sql
     }};

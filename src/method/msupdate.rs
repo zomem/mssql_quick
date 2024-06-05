@@ -107,8 +107,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str() + ")";
+            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str();
 
             sql
         }
@@ -169,8 +169,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str() + ")";
+            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str();
 
             sql
         }
@@ -242,8 +242,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE id=" + tmp_i.as_str() + ")";
+            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE id=" + tmp_i.as_str();
 
             sql
         }
@@ -303,8 +303,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE id=" + tmp_i.as_str() + ")";
+            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE id=" + tmp_i.as_str();
 
             sql
         }

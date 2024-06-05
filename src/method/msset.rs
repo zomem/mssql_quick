@@ -54,8 +54,8 @@ macro_rules! msset {
             keys.pop();
             values.pop();
 
-            let sql: String = "(declare @id bigint; INSERT INTO ".to_string() + $t + " ( " + keys.as_str() + " ) "
-                + " VALUES ( " + values.as_str() + " ) SET @id = scope_identity(); SELECT @id AS id )";
+            let sql: String = "declare @id bigint; INSERT INTO ".to_string() + $t + " ( " + keys.as_str() + " ) "
+                + " VALUES ( " + values.as_str() + " ) SET @id = scope_identity(); SELECT @id AS id";
 
             sql
         }

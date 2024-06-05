@@ -369,10 +369,10 @@ macro_rules! mscount {
                 _distinct = format!("DISTINCT {}", $distinct);
             )?
 
-            let sql = "(SELECT count(".to_string() + _distinct.as_str() + ") as mssql_quick_count" +
+            let sql = "SELECT count(".to_string() + _distinct.as_str() + ") as mssql_quick_count" +
                 " FROM " + $t +
                 _join.as_str() +
-                where_r.as_str() + ")";
+                where_r.as_str();
 
             sql
         }

@@ -159,22 +159,25 @@ mod tests {
             r: "p0",
         });
         let sql3 = mscount!("DeletePatient", {
-            p0: ["InvestigationId", "=", "Investigation.InvestigationId"],
+            p0: ["InvestigationId", "=", Sql("Investigation.InvestigationId")],
             r: "p0".to_string(),
         });
-
-        println!("33>>>>>  {} \n", sql2);
 
         let sql = msfind!("Investigation", {
             j1: ["HospitalId", "inner", "Hospital.HospitalId"],
             p0: ["HospitalId", "in", Sql(sql1)],
             p1: ["InvType", "=", "门诊"],
             r: "p0 && p1".to_string(),
-            select: "InvestigationId, HospitalId, Hospital.HospitalName, StatusOpDateTime, ".to_string()
-                + sql2.as_str() + "as patient_count, "
-                + sql3.as_str() + "as delete_patient_count",
+            select: "InvestigationId, HospitalId, Hospital.HospitalName, StatusOpDateTime, (".to_string()
+                + sql2.as_str() + ") as patient_count, ("
+                + sql3.as_str() + ") as delete_patient_count",
         });
 
         println!("sql>>>>>  {} \n", sql);
+
+        assert_eq!(
+            sql,
+            r#"SELECT Investigation.InvestigationId,Investigation.HospitalId,Hospital.HospitalName,Investigation.StatusOpDateTime,(SELECT count(*) as mssql_quick_count FROM Patient WHERE Patient.InvestigationId = (Investigation.InvestigationId)) as patient_count,(SELECT count(*) as mssql_quick_count FROM DeletePatient WHERE DeletePatient.InvestigationId = (Investigation.InvestigationId)) as delete_patient_count FROM Investigation INNER JOIN Hospital ON Investigation.HospitalId = Hospital.HospitalId WHERE (Investigation.HospitalId IN (SELECT Hospital.HospitalId FROM Hospital WHERE Hospital.HospitalName LIKE N'信息%' ) AND Investigation.InvType = N'门诊') "#
+        )
     }
 }

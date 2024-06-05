@@ -321,9 +321,9 @@ macro_rules! msdelmany {
                 where_r = " WHERE ".to_string() + qq_all.as_str();
             }
 
-            let sql = "(DELETE ".to_string() +
+            let sql = "DELETE ".to_string() +
                 "FROM " + $t +
-                where_r.as_str() + ")";
+                where_r.as_str();
 
             sql
         }

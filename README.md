@@ -122,8 +122,8 @@ let sql = msfind!("Investigation", {
     p0: ["HospitalId", "in", Sql(sql1)],
     p1: ["InvType", "=", "门诊"],
     r: "p0 && p1",
-    select: "InvestigationId, HospitalId,".to_string()
-        + sql2.as_str() + " as patient_count",
+    select: "InvestigationId, HospitalId, (".to_string()
+        + sql2.as_str() + ") as patient_count",
 });
 
 println!("sql>>>>>  {} \n", sql);
