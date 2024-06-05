@@ -10,7 +10,7 @@ pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
 #[cfg(test)]
 mod tests {
-    use crate::{mscount, msdelmany, msfind, msupdatemany, EncryptionLevel, MssqlQuick};
+    use crate::{mscount, msdelmany, msfind, msupdatemany, EncryptionLevel, MssqlQuick, Sql};
     use serde::{Deserialize, Serialize};
 
     const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
@@ -109,6 +109,10 @@ mod tests {
         });
         println!("22322222::::::: {}", sql);
 
+        let string = "a(".to_string();
+        let s1 = &string[0..1];
+        println!("s1  {}", s1);
+
         // let vec_data = vec![
         //     Item {
         //         title: "名字".to_string(),
@@ -140,5 +144,37 @@ mod tests {
         // println!("ssssql::::::: {}", sql);
 
         assert!(true)
+    }
+
+    #[tokio::test]
+    async fn test_complex() {
+        let sql1 = msfind!("Hospital", {
+            p0: ["HospitalName", "like", "信息%"],
+            r: "p0",
+            select: "HospitalId",
+        });
+
+        let sql2 = mscount!("Patient", {
+            p0: ["InvestigationId", "=", Sql("Investigation.InvestigationId")],
+            r: "p0",
+        });
+        let sql3 = mscount!("DeletePatient", {
+            p0: ["InvestigationId", "=", "Investigation.InvestigationId"],
+            r: "p0".to_string(),
+        });
+
+        println!("33>>>>>  {} \n", sql2);
+
+        let sql = msfind!("Investigation", {
+            j1: ["HospitalId", "inner", "Hospital.HospitalId"],
+            p0: ["HospitalId", "in", Sql(sql1)],
+            p1: ["InvType", "=", "门诊"],
+            r: "p0 && p1".to_string(),
+            select: "InvestigationId, HospitalId, Hospital.HospitalName, StatusOpDateTime, ".to_string()
+                + sql2.as_str() + "as patient_count, "
+                + sql3.as_str() + "as delete_patient_count",
+        });
+
+        println!("sql>>>>>  {} \n", sql);
     }
 }

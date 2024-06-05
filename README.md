@@ -101,3 +101,30 @@ let list: Vec<serde_json::Value> =
     ms_run_vec(&mut client, "select distinct type_v3 from dishes".to_owned()).await.unwrap();
 
 ```
+
+### 组合查寻
+通过 Sql 包裹
+```rust
+use mssql_quick::Sql;
+
+let sql1 = msfind!("Hospital", {
+    p0: ["HospitalName", "like", "信息%"],
+    r: "p0",
+    select: "HospitalId",
+});
+let sql2 = mscount!("Patient", {
+    p0: ["InvestigationId", "=", Sql("Investigation.InvestigationId")],
+    r: "p0",
+});
+
+let sql = msfind!("Investigation", {
+    j1: ["HospitalId", "inner", "Hospital.HospitalId"],
+    p0: ["HospitalId", "in", Sql(sql1)],
+    p1: ["InvType", "=", "门诊"],
+    r: "p0 && p1",
+    select: "InvestigationId, HospitalId,".to_string()
+        + sql2.as_str() + " as patient_count",
+});
+
+println!("sql>>>>>  {} \n", sql);
+```

@@ -48,24 +48,19 @@ macro_rules! msupdate {
             let i_data = $iv;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
-                "&&str" => {
+                "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                     let mut v_r = i_data.to_string();
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
-                },
-                "&&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
+                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                "&f32" | "&f64" | "&bool" => {
+                    i_data.to_string() + ""
                 },
                 _ => {
-                    i_data.to_string() + ""
-                }
+                   "".to_string()
+                },
             };
 
 
@@ -78,24 +73,19 @@ macro_rules! msupdate {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = temp_v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
-                        },
-                        "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            temp_v.to_string() + ","
                         },
                         _ => {
-                            temp_v.to_string() + ","
-                        }
+                           "".to_string()
+                        },
                     };
                 }
 
@@ -117,8 +107,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str();
+            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str() + ")";
 
             sql
         }
@@ -133,24 +123,19 @@ macro_rules! msupdate {
             let i_data = $iv;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
-                "&&str" => {
+                "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                     let mut v_r = i_data.to_string();
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
-                },
-                "&&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
+                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                "&f32" | "&f64" | "&bool" => {
+                    i_data.to_string() + ""
                 },
                 _ => {
-                    i_data.to_string() + ""
-                }
+                   "".to_string()
+                },
             };
 
 
@@ -163,24 +148,19 @@ macro_rules! msupdate {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = temp_v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
-                        },
-                        "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            temp_v.to_string() + ","
                         },
                         _ => {
-                            temp_v.to_string() + ","
-                        }
+                           "".to_string()
+                        },
                     };
                 }
                 let tmp_s = $k.to_string() + "=" + value.as_str();
@@ -189,8 +169,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str();
+            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE " + tmp_ik.as_str() + "=" + tmp_i.as_str() + ")";
 
             sql
         }
@@ -204,24 +184,19 @@ macro_rules! msupdate {
             let i_data = $i;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
-                "&&str" => {
+                "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                     let mut v_r = i_data.to_string();
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
-                },
-                "&&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
+                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                "&f32" | "&f64" | "&bool" => {
+                    i_data.to_string() + ""
                 },
                 _ => {
-                    i_data.to_string() + ""
-                }
+                   "".to_string()
+                },
             };
 
 
@@ -234,24 +209,19 @@ macro_rules! msupdate {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = temp_v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
-                        },
-                        "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            temp_v.to_string() + ","
                         },
                         _ => {
-                            temp_v.to_string() + ","
-                        }
+                           "".to_string()
+                        },
                     };
                 }
                 let tmp_s = match $m {
@@ -272,8 +242,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE id=" + tmp_i.as_str();
+            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE id=" + tmp_i.as_str() + ")";
 
             sql
         }
@@ -287,24 +257,19 @@ macro_rules! msupdate {
             let i_data = $i;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
-                "&&str" => {
+                "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                     let mut v_r = i_data.to_string();
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
-                },
-                "&&alloc::string::String" => {
-                    let mut v_r = i_data.to_string();
-                    v_r = v_r.replace("'", "''");
-                    "N'".to_string() + &v_r + "'"
+                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                "&f32" | "&f64" | "&bool" => {
+                    i_data.to_string() + ""
                 },
                 _ => {
-                    i_data.to_string() + ""
-                }
+                   "".to_string()
+                },
             };
 
 
@@ -317,24 +282,19 @@ macro_rules! msupdate {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = temp_v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
-                        },
-                        "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "',"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            temp_v.to_string() + ","
                         },
                         _ => {
-                            temp_v.to_string() + ","
-                        }
+                           "".to_string()
+                        },
                     };
                 }
                 let tmp_s = $k.to_string() + "=" + value.as_str();
@@ -343,8 +303,8 @@ macro_rules! msupdate {
 
             temp_s.pop();
 
-            let sql: String = "UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
-                + " WHERE id=" + tmp_i.as_str();
+            let sql: String = "(UPDATE ".to_string() + $t + " SET " + temp_s.as_str()
+                + " WHERE id=" + tmp_i.as_str() + ")";
 
             sql
         }

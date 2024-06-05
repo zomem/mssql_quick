@@ -25,26 +25,23 @@ macro_rules! msdel {
         let temp_v = $v;
         let v_type = type_of(&temp_v);
         let values = match v_type {
-            "&&str" => {
+            "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                 let mut v_r = temp_v.to_string();
                 v_r = v_r.replace("'", "''");
                 "N'".to_string() + &v_r + "'"
             }
-            "&alloc::string::String" => {
-                let mut v_r = temp_v.to_string();
-                v_r = v_r.replace("'", "''");
-                "N'".to_string() + &v_r + "'"
-            }
-            "&&alloc::string::String" => {
-                let mut v_r = temp_v.to_string();
-                v_r = v_r.replace("'", "''");
-                "N'".to_string() + &v_r + "'"
-            }
-            _ => temp_v.to_string() + "",
+            "&u8" | "&u16" | "&u32" | "&u64" | "&usize" | "&i8" | "&i16" | "&i32" | "&i64"
+            | "&isize" | "&f32" | "&f64" | "&bool" => temp_v.to_string() + "",
+            _ => "".to_string(),
         };
 
-        let sql: String =
-            "DELETE FROM ".to_string() + $t + " WHERE " + keys.as_str() + "=" + values.as_str();
+        let sql: String = "(DELETE FROM ".to_string()
+            + $t
+            + " WHERE "
+            + keys.as_str()
+            + "="
+            + values.as_str()
+            + ")";
 
         sql
     }};
@@ -56,25 +53,17 @@ macro_rules! msdel {
         let temp_v = $v;
         let v_type = type_of(&temp_v);
         let values = match v_type {
-            "&&str" => {
+            "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                 let mut v_r = temp_v.to_string();
                 v_r = v_r.replace("'", "''");
                 "N'".to_string() + &v_r + "'"
             }
-            "&alloc::string::String" => {
-                let mut v_r = temp_v.to_string();
-                v_r = v_r.replace("'", "''");
-                "N'".to_string() + &v_r + "'"
-            }
-            "&&alloc::string::String" => {
-                let mut v_r = temp_v.to_string();
-                v_r = v_r.replace("'", "''");
-                "N'".to_string() + &v_r + "'"
-            }
-            _ => temp_v.to_string() + "",
+            "&u8" | "&u16" | "&u32" | "&u64" | "&usize" | "&i8" | "&i16" | "&i32" | "&i64"
+            | "&isize" | "&f32" | "&f64" | "&bool" => temp_v.to_string() + "",
+            _ => "".to_string(),
         };
 
-        let sql: String = "DELETE FROM ".to_string() + $t + " WHERE id=" + values.as_str();
+        let sql: String = "(DELETE FROM ".to_string() + $t + " WHERE id=" + values.as_str() + ")";
 
         sql
     }};

@@ -88,40 +88,47 @@ macro_rules! mscount {
                 }
                 tmp_name
             }
-            fn _get_p_in(tmp_v: String) -> String {
-                let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
-                let mut tmp_vs: Vec<String> = vec![];
-                for t in tmp_vl.iter() {
-                    let mut v_r = t.to_string();
-                    v_r = v_r.replace("'", "''");
-                    tmp_vs.push("N'".to_string() + &v_r + "'");
+            fn _get_p_in(tmp_v: String, is_sql: bool) -> String {
+                if is_sql {
+                    tmp_v.to_string().replace("Sql", "")
+                } else {
+                    let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
+                    let mut tmp_vs: Vec<String> = vec![];
+                    for t in tmp_vl.iter() {
+                        let mut v_r = t.to_string();
+                        v_r = v_r.replace("'", "''");
+                        tmp_vs.push("N'".to_string() + &v_r + "'");
+                    }
+                    "(".to_string() + tmp_vs.join(",").as_str() + ")"
                 }
-                tmp_vs.join(",")
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
                 let mut tmp_v = v.to_string();
+                let mut is_sql = false;
                 if m == "in" || m == "not_in" || m == "is_null" {
-
+                    if vty == "&mssql_quick::method::method::Sql<&str>" ||
+                    vty == "&mssql_quick::method::method::Sql<alloc::string::String>" {
+                        is_sql = true;
+                    }
                 } else {
                     tmp_v = match vty {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "'"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
+                        "&mssql_quick::method::method::Sql<&str>" |
+                        "&mssql_quick::method::method::Sql<alloc::string::String>" => {
+                            v.to_string().replace("Sql", "")
                         },
-                        "&&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            v.to_string() + ""
                         },
                         _ => {
-                            v.to_string() + ""
-                        }
+                           "".to_string()
+                        },
                     };
                 }
                 let k_re = _rename_field(k, main_table_change);
@@ -133,8 +140,8 @@ macro_rules! mscount {
                     "<=" => k_re + " <= " + tmp_v.as_str(),
                     "!=" => k_re + " != " + tmp_v.as_str(),
                     "like" => k_re + " LIKE " + tmp_v.as_str(),
-                    "in" => k_re + " IN (" + _get_p_in(tmp_v).as_str() + ")",
-                    "not_in" => k_re + " NOT IN (" + _get_p_in(tmp_v).as_str() + ")",
+                    "in" => k_re + " IN " + _get_p_in(tmp_v, is_sql).as_str(),
+                    "not_in" => k_re + " NOT IN " + _get_p_in(tmp_v, is_sql).as_str(),
                     "is_null" => {
                         let is_null = if tmp_v == "true" {"NULL"} else {"NOT NULL"};
                         k_re + " is " + is_null
@@ -362,10 +369,10 @@ macro_rules! mscount {
                 _distinct = format!("DISTINCT {}", $distinct);
             )?
 
-            let sql = "SELECT count(".to_string() + _distinct.as_str() + ") as mssql_quick_count" +
+            let sql = "(SELECT count(".to_string() + _distinct.as_str() + ") as mssql_quick_count" +
                 " FROM " + $t +
                 _join.as_str() +
-                where_r.as_str();
+                where_r.as_str() + ")";
 
             sql
         }

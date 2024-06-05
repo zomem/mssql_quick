@@ -169,7 +169,7 @@ macro_rules! msupdatemany {
             }
         }
 
-        let sql: String = "UPDATE ".to_string()
+        let sql: String = "(UPDATE ".to_string()
             + $t
             + " SET "
             + field_equl.join(", ").as_str()
@@ -180,7 +180,8 @@ macro_rules! msupdatemany {
             + ") AS "
             + table_upmj.as_str()
             + " ON"
-            + i_data.as_str();
+            + i_data.as_str()
+            + ")";
 
         sql
     }};

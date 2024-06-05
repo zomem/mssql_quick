@@ -1,3 +1,4 @@
+use std::fmt::Display;
 use tiberius::{
     error::Error,
     time::chrono::{NaiveDate, NaiveDateTime, NaiveTime},
@@ -9,6 +10,22 @@ use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 use regex::Regex;
 use serde::{de::DeserializeOwned, Serialize};
 pub use tiberius::{EncryptionLevel, Row};
+
+/// Sql(String)，会将 String 识别为 sql 语句，而不是参数值
+///
+/// 仅支持 msget mscount msfind
+#[derive(Debug)]
+pub struct Sql<T: Into<String>>(pub T);
+impl<T: Into<String> + Display> Display for Sql<T> {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(fmt, "Sql({})", self.0)
+    }
+}
+// impl<T: Into<String> + Display> From<Sql<T>> for String {
+//     fn from(value: Sql<T>) -> Self {
+//         value.0.to_string()
+//     }
+// }
 
 // AsyncRead + AsyncWrite + Unpin + Send
 pub struct MssqlQuick {

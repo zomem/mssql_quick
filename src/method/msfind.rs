@@ -149,40 +149,47 @@ macro_rules! msfind {
                 }
                 tmp_name
             }
-            fn _get_p_in(tmp_v: String) -> String {
-                let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
-                let mut tmp_vs: Vec<String> = vec![];
-                for t in tmp_vl.iter() {
-                    let mut v_r = t.to_string();
-                    v_r = v_r.replace("'", "''");
-                    tmp_vs.push("N'".to_string() + &v_r + "'");
+            fn _get_p_in(tmp_v: String, is_sql: bool) -> String {
+                if is_sql {
+                    tmp_v.to_string().replace("Sql", "")
+                } else {
+                    let tmp_vl: Vec<&str> = tmp_v.split(",").collect();
+                    let mut tmp_vs: Vec<String> = vec![];
+                    for t in tmp_vl.iter() {
+                        let mut v_r = t.to_string();
+                        v_r = v_r.replace("'", "''");
+                        tmp_vs.push("N'".to_string() + &v_r + "'");
+                    }
+                    "(".to_string() + tmp_vs.join(",").as_str() + ")"
                 }
-                tmp_vs.join(",")
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
                 let mut tmp_v = v.to_string();
+                let mut is_sql = false;
                 if m == "in" || m == "not_in" || m == "is_null" {
-
+                    if vty == "&mssql_quick::method::method::Sql<&str>" ||
+                    vty == "&mssql_quick::method::method::Sql<alloc::string::String>" {
+                        is_sql = true;
+                    }
                 } else {
                     tmp_v = match vty {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "'"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
+                        "&mssql_quick::method::method::Sql<&str>" |
+                        "&mssql_quick::method::method::Sql<alloc::string::String>" => {
+                            v.to_string().replace("Sql", "")
                         },
-                        "&&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            v.to_string() + ""
                         },
                         _ => {
-                            v.to_string() + ""
-                        }
+                           "".to_string()
+                        },
                     };
                 }
                 let k_re = _rename_field(k, main_table_change);
@@ -194,8 +201,8 @@ macro_rules! msfind {
                     "<=" => k_re + " <= " + tmp_v.as_str(),
                     "!=" => k_re + " != " + tmp_v.as_str(),
                     "like" => k_re + " LIKE " + tmp_v.as_str(),
-                    "in" => k_re + " IN (" + _get_p_in(tmp_v).as_str() + ")",
-                    "not_in" => k_re + " NOT IN (" + _get_p_in(tmp_v).as_str() + ")",
+                    "in" => k_re + " IN " + _get_p_in(tmp_v, is_sql).as_str(),
+                    "not_in" => k_re + " NOT IN " + _get_p_in(tmp_v, is_sql).as_str(),
                     "is_null" => {
                         let is_null = if tmp_v == "true" {"NULL"} else {"NOT NULL"};
                         k_re + " is " + is_null
@@ -222,9 +229,9 @@ macro_rules! msfind {
                 j_string
             }
 
-            fn _get_select(s: &str, main_table_change: &str) -> String {
+            fn _get_select<T: Into<String> + std::fmt::Display>(s: T, main_table_change: &str) -> String {
                 let mut tmp_select = String::from("");
-                for v in s.split(",").collect::<Vec<&str>>().iter() {
+                for v in s.to_string().split(",").collect::<Vec<&str>>().iter() {
                     let mut is_distinct = false;
                     let mut tmpv = v.to_string();
                     if v.contains("DISTINCT ") || v.contains("distinct ") {
@@ -240,9 +247,9 @@ macro_rules! msfind {
                 tmp_select
             }
 
-            fn _get_order_by(order: &str, main_table_change: &str) -> String {
+            fn _get_order_by<T: Into<String> + std::fmt::Display>(order: T, main_table_change: &str) -> String {
                 let mut tmp_order = String::from("");
-                let tmp_o: String = order.split_whitespace().collect();
+                let tmp_o: String = order.to_string().split_whitespace().collect();
                 for v in tmp_o.split(",").collect::<Vec<&str>>().iter() {
                     let frs = &v[0..1];
                     if frs == "-" {
@@ -471,7 +478,7 @@ macro_rules! msfind {
                 _limit_page = " ".to_string();
             }
 
-            let mut _order_by = String::from(" ORDER BY id ASC");
+            let mut _order_by = String::from(""); // String::from(" ORDER BY id ASC");
             $(
                 _order_by = _get_order_by($order_by, _table_change);
             )?
@@ -497,7 +504,7 @@ macro_rules! msfind {
                 _group_order_by = _get_order_by($group_order_by, _table_change);
             )?
 
-            let sql = "SELECT ".to_string() + _select +
+            let sql = "(SELECT ".to_string() + _select +
                 " FROM " + $t +
                 _join.as_str() +
                 where_r.as_str() +
@@ -505,7 +512,7 @@ macro_rules! msfind {
                 _limit_page.as_str() +
                 _group.as_str() +
                 _have.as_str() +
-                _group_order_by.as_str();
+                _group_order_by.as_str() + ")";
 
             sql
         }

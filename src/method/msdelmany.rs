@@ -90,7 +90,7 @@ macro_rules! msdelmany {
                     v_r = v_r.replace("'", "''");
                     tmp_vs.push("N'".to_string() + &v_r + "'");
                 }
-                tmp_vs.join(",")
+                "(".to_string() + tmp_vs.join(",").as_str() + ")"
             }
             fn _get_p(k: &str, m: &str, v: &str, vty: &str, main_table_change: &str) -> String {
                 let mut tmp_v = v.to_string();
@@ -98,23 +98,18 @@ macro_rules! msdelmany {
 
                 } else {
                     tmp_v = match vty {
-                        "&&str" => {
+                        "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             let mut v_r = v.to_string();
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "'"
                         },
-                        "&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
-                        },
-                        "&&alloc::string::String" => {
-                            let mut v_r = v.to_string();
-                            v_r = v_r.replace("'", "''");
-                            "N'".to_string() + &v_r + "'"
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
+                        "&f32" | "&f64" | "&bool" => {
+                            v.to_string() + ""
                         },
                         _ => {
-                            v.to_string() + ""
+                            "".to_string()
                         }
                     };
                 }
@@ -127,8 +122,8 @@ macro_rules! msdelmany {
                     "<=" => k_re + " <= " + tmp_v.as_str(),
                     "!=" => k_re + " != " + tmp_v.as_str(),
                     "like" => k_re + " LIKE " + tmp_v.as_str(),
-                    "in" => k_re + " IN (" + _get_p_in(tmp_v).as_str() + ")",
-                    "not_in" => k_re + " NOT IN (" + _get_p_in(tmp_v).as_str() + ")",
+                    "in" => k_re + " IN " + _get_p_in(tmp_v).as_str(),
+                    "not_in" => k_re + " NOT IN " + _get_p_in(tmp_v).as_str(),
                     "is_null" => {
                         let is_null = if tmp_v == "true" {"NULL"} else {"NOT NULL"};
                         k_re + " is " + is_null
@@ -326,9 +321,9 @@ macro_rules! msdelmany {
                 where_r = " WHERE ".to_string() + qq_all.as_str();
             }
 
-            let sql = "DELETE ".to_string() +
+            let sql = "(DELETE ".to_string() +
                 "FROM " + $t +
-                where_r.as_str();
+                where_r.as_str() + ")";
 
             sql
         }
