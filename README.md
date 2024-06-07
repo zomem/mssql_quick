@@ -112,7 +112,7 @@ let sql1 = msfind!("Hospital", {
     r: "p0",
     select: "HospitalId",
 });
-let sql2 = mscount!("Patient", {
+let sql2 = mscount!("DataBase..Patient", { // 对其他库的表查寻
     p0: ["InvestigationId", "=", Sql("Investigation.InvestigationId")],
     r: "p0",
 });
@@ -123,7 +123,7 @@ let sql = msfind!("Investigation", {
     p1: ["InvType", "=", "门诊"],
     r: "p0 && p1",
     select: "InvestigationId, HospitalId, (".to_string()
-        + sql2.as_str() + ") as patient_count",
+        + sql2.as_str() + ") as patient_count",  // 如果自己写sql语句，要注意sql注入
 });
 
 println!("sql>>>>>  {} \n", sql);

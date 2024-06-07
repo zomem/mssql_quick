@@ -27,7 +27,7 @@
 /// // 示例如下
 /// let sql = msfind!("feedback as fb", {
 ///     j0: ["uid", "inner", "users.id"],
-///     j1: ["uid", "inner", "users as u2.id"], // 对表重命名
+///     j1: ["uid", "inner", "users.id as u2"], // 对表重命名
 ///     j2: ["book_id", "left", "book.id"],
 ///     j3: ["book.uid", "right", "users.id"],
 ///     p0: ["num", ">", 0],
