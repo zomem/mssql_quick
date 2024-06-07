@@ -64,20 +64,38 @@ macro_rules! mscount {
                 table_change
             }
             // 获取table.field ”users as u.id“，如果只有 field 则table 为主table
-            fn _get_table_f<'a>(tf: &'a str, main_t: &'a str) -> (&'a str, &'a str, &'a str) {
-                let mut _tmp_t = "";  // talbe
-                let mut _tmp_f = "";  // field
-                if tf.contains(".") {
+            fn _get_table_f<'a>(tf: &'a str, main_t: &'a str) -> (String, String, String, bool) {
+                let t_list: Vec<&str> = tf.split_whitespace().collect();
+                let tf = t_list[0];
+                let mut _tmp_t = "".to_string();  // talbe
+                let mut _tmp_f = "".to_string();  // field
+                if tf.contains("..") {
+                    let tmp_vc_d: Vec<&str> = tf.split("..").collect();
+                    let tmp_vc: Vec<&str> = tmp_vc_d[1].split(".").collect();
+                     _tmp_t = format!("{}..{}", tmp_vc_d[0], tmp_vc[0]);
+                     _tmp_f = tmp_vc[1].to_string();
+                } else if tf.contains(".") {
                     let tmp_vc: Vec<&str> = tf.split(".").collect();
-                    _tmp_t = tmp_vc[0];
-                    _tmp_f = tmp_vc[1];
+                    if tmp_vc.len() == 3 {
+                         _tmp_t = format!("{}.{}", tmp_vc[0], tmp_vc[1]);
+                         _tmp_f = tmp_vc[2].to_string();
+                    } else {
+                        _tmp_t = tmp_vc[0].to_string();
+                        _tmp_f = tmp_vc[1].to_string();
+                    }
                 } else {
-                    _tmp_t = main_t;
-                    _tmp_f = tf;
+                    _tmp_t = main_t.to_string();
+                    _tmp_f = tf.to_string();
                 }
-                let t_list: Vec<&str> = _tmp_t.split_whitespace().collect();
-                let table_change = t_list[t_list.len() - 1];
-                (_tmp_t, table_change, _tmp_f)  // ("users as u", "u", id)
+                let re_name_table;
+                let table_change = if t_list.len() > 1 {
+                    re_name_table = true;
+                    t_list[t_list.len() - 1].to_string()
+                } else {
+                    re_name_table = false;
+                    _tmp_t.clone()
+                };
+                (_tmp_t, table_change, _tmp_f, re_name_table)  // ("users as u", "u", id)
             }
             // 将没有带上表名的字段，都重新命名为 主表字段  main_t_change是重命名后的
             fn _rename_field(field: &str, main_t_change: &str) -> String {
@@ -107,7 +125,8 @@ macro_rules! mscount {
                 let mut is_sql = false;
                 if m == "in" || m == "not_in" || m == "is_null" {
                     if vty == "&mssql_quick::method::method::Sql<&str>" ||
-                    vty == "&mssql_quick::method::method::Sql<alloc::string::String>" {
+                    vty == "&mssql_quick::method::method::Sql<alloc::string::String>" ||
+                    vty == "&mssql_quick::method::method::Sql<&alloc::string::String>" {
                         is_sql = true;
                     }
                 } else {
@@ -118,7 +137,8 @@ macro_rules! mscount {
                             "N'".to_string() + &v_r + "'"
                         },
                         "&mssql_quick::method::method::Sql<&str>" |
-                        "&mssql_quick::method::method::Sql<alloc::string::String>" => {
+                        "&mssql_quick::method::method::Sql<alloc::string::String>" |
+                        "&mssql_quick::method::method::Sql<&alloc::string::String>" => {
                             v.to_string().replace("Sql", "")
                         },
                         "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
@@ -152,17 +172,27 @@ macro_rules! mscount {
             }
 
             fn _get_j(k: &str, m: &str, v: &str, t: &str) -> String {
-                let (_, k_table_re, k_field) = _get_table_f(k, t);
-                let (v_table, v_table_re, v_field) = _get_table_f(v, t);
+                let (_, k_table_re, k_field, _) = _get_table_f(k, t);
+                let (v_table, v_table_re, v_field, v_rename) = _get_table_f(v, t);
+                let k_table_re = k_table_re.as_str();
+                let k_field = k_field.as_str();
+                let v_table = v_table.as_str();
+                let v_table_re = v_table_re.as_str();
+                let v_field = v_field.as_str();
+                let as_vtable = if v_rename {
+                    " AS ".to_string() + v_table_re
+                } else {
+                    "".to_string()
+                };
                 let j_string = match m {
-                    "inner" => " INNER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "left" => " LEFT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "left_outer" => " LEFT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "right" => " RIGHT JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "right_outer" => " RIGHT OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "full" => " FULL JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "full_outer" => " FULL OUTER JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
-                    "cross" => " CROSS JOIN ".to_string() + v_table + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "inner" => " INNER JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "left" => " LEFT JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "left_outer" => " LEFT OUTER JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "right" => " RIGHT JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "right_outer" => " RIGHT OUTER JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "full" => " FULL JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "full_outer" => " FULL OUTER JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
+                    "cross" => " CROSS JOIN ".to_string() + v_table + as_vtable.as_str() + " ON " + k_table_re + "." + k_field + " = " + v_table_re + "." + v_field,
                     _ => "".to_string()
                 };
                 j_string

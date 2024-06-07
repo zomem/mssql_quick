@@ -148,6 +148,25 @@ mod tests {
 
     #[tokio::test]
     async fn test_complex() {
+        let sql = msfind!("for_test", {
+            p0: ["content", "=", "aaa"],
+            p1: ["uid", "=", "5"],
+            r: "p0 && p1",
+        });
+        println!("@@@ _1__ {}", sql);
+        let sql = msfind!("for_test", {
+            p0: ["content", "=", r#"' OR '1'='1'; --"#],
+            p1: ["uid", "=", "1"],
+            r: "p0 && p1",
+        });
+        println!("@@@ _2__ {}", sql);
+        let sql = msfind!("for_test", {
+            p0: ["content", "=", r#"Sql("user.name")"#],
+            p1: ["uid", "=", "1"],
+            r: "p0 && p1",
+        });
+        println!("@@@ _3__ {}", sql);
+
         let sql1 = msfind!("Hospital", {
             p0: ["HospitalName", "like", "信息%"],
             r: "p0",

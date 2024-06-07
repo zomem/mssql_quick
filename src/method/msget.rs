@@ -61,7 +61,8 @@ macro_rules! msget {
                     "N'".to_string() + &v_r + "'"
                 },
                 "&mssql_quick::method::method::Sql<&str>" |
-                "&mssql_quick::method::method::Sql<alloc::string::String>" => {
+                "&mssql_quick::method::method::Sql<alloc::string::String>" |
+                "&mssql_quick::method::method::Sql<&alloc::string::String>" => {
                     temp_v.to_string().replace("Sql", "")
                 },
                 "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
@@ -125,7 +126,8 @@ macro_rules! msget {
                     "N'".to_string() + &v_r + "'"
                 },
                 "&mssql_quick::method::method::Sql<&str>" |
-                "&mssql_quick::method::method::Sql<alloc::string::String>" => {
+                "&mssql_quick::method::method::Sql<alloc::string::String>" |
+                "&mssql_quick::method::method::Sql<&alloc::string::String>" => {
                     temp_v.to_string().replace("Sql", "")
                 },
                 "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
