@@ -48,7 +48,7 @@ let data: Vec<serde_json::Value> = ms_run_vec(&mut conn, sql).unwrap();
 ms_run_vec(&mut client, msset!("for_test", {
     "content": "ADFaadf",
     "uid": 9,
-    "info": if let Some(a) = one_info {a} else {"null"},
+    "info": Some("a"),
 })).await.unwrap();
 
 // 删除一条数据
@@ -56,7 +56,8 @@ ms_run_vec(&mut client, msdel!("for_test", 50)).await.unwrap();
 
 // 更新一条数据
 ms_run_vec(&mut client, msupdate!("for_test", 56, {
-    "content": "更新后的内容，一一一一"
+    "content": "更新后的内容",
+    "tatol": Some(200),
 })).await.unwrap();
 
 // 批量 新增数据

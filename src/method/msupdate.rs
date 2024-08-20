@@ -6,9 +6,10 @@
 /// # let mut client = MssqlQuick::new(MSSQL_URL, EncryptionLevel::NotSupported).await.unwrap().client;
 /// # let des_str = r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#;
 /// let sql = msupdate!("for_test", 5, {
-///     "title": "更新标题",
+///     "title": Some("更新标题"),
 ///     "uid": 6,
 ///     "content": des_str,
+///     "info": None, // None 或 "null" 表示新增字段为NULL
 /// });  // id = 5
 /// let _: Vec<()> = ms_run_vec(&mut client, sql).await.unwrap();
 ///
@@ -44,6 +45,29 @@ macro_rules! msupdate {
             fn type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
+            fn get_v_type(t: &str) -> &'static str {
+                if t.contains("u8") ||
+                    t.contains("u16") ||
+                    t.contains("u32") ||
+                    t.contains("u64") ||
+                    t.contains("u128") ||
+                    t.contains("usize") ||
+                    t.contains("i8") ||
+                    t.contains("i16") ||
+                    t.contains("i32") ||
+                    t.contains("i64") ||
+                    t.contains("i64") ||
+                    t.contains("i128") ||
+                    t.contains("isize") ||
+                    t.contains("f32") ||
+                    t.contains("f64") ||
+                    t.contains("f128") ||
+                    t.contains("bool")
+                {
+                    return "&u8";
+                }
+                "&&str"
+            }
             let tmp_ik = $ik.to_string();
             let i_data = $iv;
             let i_type = type_of(&i_data);
@@ -53,9 +77,9 @@ macro_rules! msupdate {
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                "&f32" | "&f64" | "&bool" => {
+                "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
                 _ => {
@@ -66,22 +90,40 @@ macro_rules! msupdate {
 
             let mut temp_s = String::from("");
             $(
-                let temp_v = $v;
-                let v_type = type_of(&temp_v);
+                let temp_op = $v;
+                let op_v_type = type_of(&temp_op);
+                let mut temp_v: String;
+                let mut v_type = "&&str";
                 let value;
-                if temp_v.to_string().as_str() == "null" {
+                if op_v_type.contains("&core::option::Option") {
+                    let op_str = format!("{:?}", temp_op);
+                    if op_str == "None".to_string() {
+                        temp_v = "null".to_string();
+                    } else {
+                        let mut t = op_str.replace("Some(", "");
+                        t.pop();
+                        temp_v = t;
+                        v_type = get_v_type(op_v_type)
+                    }
+                } else {
+                    temp_v = format!("{:?}", temp_op);
+                    v_type = get_v_type(op_v_type)
+                }
+                if temp_v.as_str() == "null" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
+                            temp_v.remove(0);
+                            temp_v.pop();
+                            let mut v_r = temp_v;
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
-                            temp_v.to_string() + ","
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
+                            temp_v + ","
                         },
                         _ => {
                            "".to_string()
@@ -119,6 +161,29 @@ macro_rules! msupdate {
             fn type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
+            fn get_v_type(t: &str) -> &'static str {
+                if t.contains("u8") ||
+                    t.contains("u16") ||
+                    t.contains("u32") ||
+                    t.contains("u64") ||
+                    t.contains("u128") ||
+                    t.contains("usize") ||
+                    t.contains("i8") ||
+                    t.contains("i16") ||
+                    t.contains("i32") ||
+                    t.contains("i64") ||
+                    t.contains("i64") ||
+                    t.contains("i128") ||
+                    t.contains("isize") ||
+                    t.contains("f32") ||
+                    t.contains("f64") ||
+                    t.contains("f128") ||
+                    t.contains("bool")
+                {
+                    return "&u8";
+                }
+                "&&str"
+            }
             let tmp_ik = $ik.to_string();
             let i_data = $iv;
             let i_type = type_of(&i_data);
@@ -128,9 +193,9 @@ macro_rules! msupdate {
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                "&f32" | "&f64" | "&bool" => {
+                "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
                 _ => {
@@ -141,22 +206,40 @@ macro_rules! msupdate {
 
             let mut temp_s = String::from("");
             $(
-                let temp_v = $v;
-                let v_type = type_of(&temp_v);
+                let temp_op = $v;
+                let op_v_type = type_of(&temp_op);
+                let mut temp_v: String;
+                let mut v_type = "&&str";
                 let value;
-                if temp_v.to_string().as_str() == "null" {
+                if op_v_type.contains("&core::option::Option") {
+                    let op_str = format!("{:?}", temp_op);
+                    if op_str == "None".to_string() {
+                        temp_v = "null".to_string();
+                    } else {
+                        let mut t = op_str.replace("Some(", "");
+                        t.pop();
+                        temp_v = t;
+                        v_type = get_v_type(op_v_type)
+                    }
+                } else {
+                    temp_v = format!("{:?}", temp_op);
+                    v_type = get_v_type(op_v_type)
+                }
+                if temp_v.as_str() == "null" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
+                            temp_v.remove(0);
+                            temp_v.pop();
+                            let mut v_r = temp_v;
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
-                            temp_v.to_string() + ","
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
+                            temp_v + ","
                         },
                         _ => {
                            "".to_string()
@@ -181,6 +264,29 @@ macro_rules! msupdate {
             fn type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
+            fn get_v_type(t: &str) -> &'static str {
+                if t.contains("u8") ||
+                    t.contains("u16") ||
+                    t.contains("u32") ||
+                    t.contains("u64") ||
+                    t.contains("u128") ||
+                    t.contains("usize") ||
+                    t.contains("i8") ||
+                    t.contains("i16") ||
+                    t.contains("i32") ||
+                    t.contains("i64") ||
+                    t.contains("i64") ||
+                    t.contains("i128") ||
+                    t.contains("isize") ||
+                    t.contains("f32") ||
+                    t.contains("f64") ||
+                    t.contains("f128") ||
+                    t.contains("bool")
+                {
+                    return "&u8";
+                }
+                "&&str"
+            }
             let i_data = $i;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
@@ -189,9 +295,9 @@ macro_rules! msupdate {
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                "&f32" | "&f64" | "&bool" => {
+                "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
                 _ => {
@@ -202,22 +308,40 @@ macro_rules! msupdate {
 
             let mut temp_s = String::from("");
             $(
-                let temp_v = $v;
-                let v_type = type_of(&temp_v);
+                let temp_op = $v;
+                let op_v_type = type_of(&temp_op);
+                let mut temp_v: String;
+                let mut v_type = "&&str";
                 let value;
-                if temp_v.to_string().as_str() == "null" {
+                if op_v_type.contains("&core::option::Option") {
+                    let op_str = format!("{:?}", temp_op);
+                    if op_str == "None".to_string() {
+                        temp_v = "null".to_string();
+                    } else {
+                        let mut t = op_str.replace("Some(", "");
+                        t.pop();
+                        temp_v = t;
+                        v_type = get_v_type(op_v_type)
+                    }
+                } else {
+                    temp_v = format!("{:?}", temp_op);
+                    v_type = get_v_type(op_v_type)
+                }
+                if temp_v.as_str() == "null" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
+                            temp_v.remove(0);
+                            temp_v.pop();
+                            let mut v_r = temp_v;
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
-                            temp_v.to_string() + ","
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
+                            temp_v + ","
                         },
                         _ => {
                            "".to_string()
@@ -254,6 +378,29 @@ macro_rules! msupdate {
             fn type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
+            fn get_v_type(t: &str) -> &'static str {
+                if t.contains("u8") ||
+                    t.contains("u16") ||
+                    t.contains("u32") ||
+                    t.contains("u64") ||
+                    t.contains("u128") ||
+                    t.contains("usize") ||
+                    t.contains("i8") ||
+                    t.contains("i16") ||
+                    t.contains("i32") ||
+                    t.contains("i64") ||
+                    t.contains("i64") ||
+                    t.contains("i128") ||
+                    t.contains("isize") ||
+                    t.contains("f32") ||
+                    t.contains("f64") ||
+                    t.contains("f128") ||
+                    t.contains("bool")
+                {
+                    return "&u8";
+                }
+                "&&str"
+            }
             let i_data = $i;
             let i_type = type_of(&i_data);
             let tmp_i = match i_type {
@@ -262,9 +409,9 @@ macro_rules! msupdate {
                     v_r = v_r.replace("'", "''");
                     "N'".to_string() + &v_r + "'"
                 },
-                "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                "&f32" | "&f64" | "&bool" => {
+                "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
                 _ => {
@@ -275,22 +422,40 @@ macro_rules! msupdate {
 
             let mut temp_s = String::from("");
             $(
-                let temp_v = $v;
-                let v_type = type_of(&temp_v);
+                let temp_op = $v;
+                let op_v_type = type_of(&temp_op);
+                let mut temp_v: String;
+                let mut v_type = "&&str";
                 let value;
-                if temp_v.to_string().as_str() == "null" {
+                if op_v_type.contains("&core::option::Option") {
+                    let op_str = format!("{:?}", temp_op);
+                    if op_str == "None".to_string() {
+                        temp_v = "null".to_string();
+                    } else {
+                        let mut t = op_str.replace("Some(", "");
+                        t.pop();
+                        temp_v = t;
+                        v_type = get_v_type(op_v_type)
+                    }
+                } else {
+                    temp_v = format!("{:?}", temp_op);
+                    v_type = get_v_type(op_v_type)
+                }
+                if temp_v.as_str() == "null" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
-                            let mut v_r = temp_v.to_string();
+                            temp_v.remove(0);
+                            temp_v.pop();
+                            let mut v_r = temp_v;
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
-                            temp_v.to_string() + ","
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
+                            temp_v + ","
                         },
                         _ => {
                            "".to_string()

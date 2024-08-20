@@ -103,9 +103,9 @@ macro_rules! msdelmany {
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "'"
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
                             v.to_string() + ""
                         },
                         _ => {

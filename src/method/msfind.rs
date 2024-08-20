@@ -203,9 +203,9 @@ macro_rules! msfind {
                         "&mssql_quick::method::method::Sql<&alloc::string::String>" => {
                             v.to_string().replace("Sql", "")
                         },
-                        "&u8" | "&u16" | "&u32" | "&u64" | "&usize" |
-                        "&i8" | "&i16" | "&i32" | "&i64" | "&isize" |
-                        "&f32" | "&f64" | "&bool" => {
+                        "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                        "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                        "&f32" | "&f64" | "&f128" | "&bool" => {
                             v.to_string() + ""
                         },
                         _ => {

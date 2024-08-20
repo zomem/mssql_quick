@@ -10,11 +10,11 @@
 /// struct Item {
 ///     id: u64,
 ///     content: String,
-///     total: u32,
+///     total: Option<u32>,
 /// }
 /// let vec_data = vec![
-///     Item {id: 7, content: String::from("批量更新11"), total: 10},
-///     Item {id: 8, content: des_str.to_string(), total: 10},
+///     Item {id: 7, content: String::from("批量更新11"), total: None},
+///     Item {id: 8, content: des_str.to_string(), total: Some(10)},
 /// ];
 /// // 当前以 id 字段为查寻条件，更新 id 分别为7、8数据的content、total为对应的值。
 /// let sql = msupdatemany!("for_test", "id", vec_data);
