@@ -22,28 +22,66 @@ macro_rules! msset {
             fn type_of<T>(_: T) -> &'static str {
                 std::any::type_name::<T>()
             }
-            fn get_v_type(t: &str) -> &'static str {
-                if t.contains("u8") ||
-                    t.contains("u16") ||
-                    t.contains("u32") ||
-                    t.contains("u64") ||
-                    t.contains("u128") ||
-                    t.contains("usize") ||
-                    t.contains("i8") ||
-                    t.contains("i16") ||
-                    t.contains("i32") ||
-                    t.contains("i64") ||
-                    t.contains("i64") ||
-                    t.contains("i128") ||
-                    t.contains("isize") ||
-                    t.contains("f32") ||
-                    t.contains("f64") ||
-                    t.contains("f128") ||
-                    t.contains("bool")
-                {
-                    return "&u8";
+            fn get_v_type(t: &'static str) -> &'static str {
+                match t {
+                    "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
+                        t
+                    },
+                    "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
+                    "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
+                    "&f32" | "&f64" | "&f128" | "&bool" => {
+                        t
+                    },
+                    "&core::option::Option<&str>" |
+                    "&core::option::Option<alloc::string::String>" |
+                    "&core::option::Option<&alloc::string::String>" => {
+                        "&&str"
+                    },
+                    "&&core::option::Option<&str>" |
+                    "&&core::option::Option<alloc::string::String>" |
+                    "&&core::option::Option<&alloc::string::String>" => {
+                        "&&str"
+                    },
+                    "&core::option::Option<u8>" |
+                    "&core::option::Option<u16>" |
+                    "&core::option::Option<u32>" |
+                    "&core::option::Option<u64>" |
+                    "&core::option::Option<u128>" |
+                    "&core::option::Option<usize>" |
+                    "&core::option::Option<i8>" |
+                    "&core::option::Option<i16>" |
+                    "&core::option::Option<i32>" |
+                    "&core::option::Option<i64>" |
+                    "&core::option::Option<i128>" |
+                    "&core::option::Option<isize>" |
+                    "&core::option::Option<f32>" |
+                    "&core::option::Option<f64>" |
+                    "&core::option::Option<f128>" |
+                    "&core::option::Option<bool>" => {
+                        "&u8"
+                    },
+                    "&&core::option::Option<u8>" |
+                    "&&core::option::Option<u16>" |
+                    "&&core::option::Option<u32>" |
+                    "&&core::option::Option<u64>" |
+                    "&&core::option::Option<u128>" |
+                    "&&core::option::Option<usize>" |
+                    "&&core::option::Option<i8>" |
+                    "&&core::option::Option<i16>" |
+                    "&&core::option::Option<i32>" |
+                    "&&core::option::Option<i64>" |
+                    "&&core::option::Option<i128>" |
+                    "&&core::option::Option<isize>" |
+                    "&&core::option::Option<f32>" |
+                    "&&core::option::Option<f64>" |
+                    "&&core::option::Option<f128>" |
+                    "&&core::option::Option<bool>" => {
+                        "&u8"
+                    },
+                    _ => {
+                       "&&str"
+                    },
                 }
-                "&&str"
             }
             let mut keys = String::from("");
             let mut values = String::from("");
