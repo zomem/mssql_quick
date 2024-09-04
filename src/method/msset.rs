@@ -32,6 +32,11 @@ macro_rules! msset {
                     "&f32" | "&f64" | "&f128" | "&bool" => {
                         t
                     },
+                    "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                    "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                    "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
+                        t
+                    },
                     "&core::option::Option<&str>" |
                     "&core::option::Option<alloc::string::String>" |
                     "&core::option::Option<&alloc::string::String>" => {
@@ -121,6 +126,11 @@ macro_rules! msset {
                         "&u8" | "&u16" | "&u32" | "&u64" | "&u128" | "&usize" |
                         "&i8" | "&i16" | "&i32" | "&i64" | "&i128" | "&isize" |
                         "&f32" | "&f64" | "&f128" | "&bool" => {
+                            values + temp_v.as_str() + ","
+                        },
+                        "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                        "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                        "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
                             values + temp_v.as_str() + ","
                         },
                         _ => {
