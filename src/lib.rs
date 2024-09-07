@@ -10,7 +10,9 @@ pub use tokio_util::compat::{Compat, TokioAsyncWriteCompatExt};
 
 #[cfg(test)]
 mod tests {
-    use crate::{mscount, msdelmany, msfind, msupdatemany, EncryptionLevel, MssqlQuick, Sql};
+    use crate::{
+        mscount, msdelmany, msfind, msset, msupdatemany, EncryptionLevel, MssqlQuick, Sql,
+    };
     use serde::{Deserialize, Serialize};
 
     const MSSQL_URL: &str = "server=tcp:localhost,1433;user=SA;password=ji83laFidia32FAEE534DFa;database=dev_db;IntegratedSecurity=true;TrustServerCertificate=true";
@@ -198,5 +200,19 @@ mod tests {
             sql,
             r#"SELECT Investigation.InvestigationId,Investigation.HospitalId,Hospital.HospitalName,Investigation.StatusOpDateTime,(SELECT count(*) as mssql_quick_count FROM Patient WHERE Patient.InvestigationId = (Investigation.InvestigationId)) as patient_count,(SELECT count(*) as mssql_quick_count FROM DeletePatient WHERE DeletePatient.InvestigationId = (Investigation.InvestigationId)) as delete_patient_count FROM Investigation INNER JOIN Hospital ON Investigation.HospitalId = Hospital.HospitalId WHERE (Investigation.HospitalId IN (SELECT Hospital.HospitalId FROM Hospital WHERE Hospital.HospitalName LIKE N'信息%' ) AND Investigation.InvType = N'门诊') "#
         )
+    }
+
+    #[test]
+    fn test_sql_set() {
+        let sql = msset!("talbe", {
+           "name": r#"m'y,,a#@!@$$^&^%&&#$,,adflll+_)"(\_)*)(32389)d(ŐдŐ๑)🍉 .',"#,
+           "b": Some(r#"m'y,,a#@!@$$^&^%&&#$,,adflll+_)"(\_)*)(32389)d(ŐдŐ๑)🍉 .',"#),
+           "cb": "null",
+        });
+        println!("sql,,,  {}", sql);
+        assert_eq!(
+            r#"declare @id bigint; INSERT INTO talbe ( name,b,cb )  VALUES ( N'm''y,,a#@!@$$^&^%&&#$,,adflll+_)"(\_)*)(32389)d(ŐдŐ๑)🍉 .'',',N'm''y,,a#@!@$$^&^%&&#$,,adflll+_)"(\_)*)(32389)d(ŐдŐ๑)🍉 .'',',NULL ) SET @id = scope_identity(); SELECT @id AS id"#,
+            sql
+        );
     }
 }

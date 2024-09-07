@@ -1,6 +1,6 @@
 [package]
 name = "mssql_quick"
-version = "1.4.2"
+version = "1.4.4"
 edition = "2021"
 authors = ["zomem"]
 description = "mssql 数据库快速连接方法"

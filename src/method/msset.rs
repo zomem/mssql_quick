@@ -112,14 +112,15 @@ macro_rules! msset {
                     temp_v = format!("{:?}", temp_op);
                     v_type = get_v_type(op_v_type)
                 }
-                if temp_v.as_str() == "null" {
+                if temp_v.as_str() == "null" || temp_v.as_str() == "\"null\"" {
                     values = values + "NULL,";
                 } else {
                     values = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             temp_v.remove(0);
                             temp_v.pop();
-                            let mut v_r = temp_v;
+                            let mut v_r = temp_v.as_str().replace(r#"\\"#, r#"\"#);
+                            v_r = v_r.replace(r#"\""#, r#"""#);
                             v_r = v_r.replace("'", "''");
                             values + "N'" + &v_r + "',"
                         },

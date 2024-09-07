@@ -125,6 +125,11 @@ macro_rules! msupdate {
                 "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
+                "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
+                    i_data.to_string() + ""
+                },
                 _ => {
                    "".to_string()
                 },
@@ -152,14 +157,15 @@ macro_rules! msupdate {
                     temp_v = format!("{:?}", temp_op);
                     v_type = get_v_type(op_v_type)
                 }
-                if temp_v.as_str() == "null" {
+                if temp_v.as_str() == "null" || temp_v.as_str() == "\"null\"" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             temp_v.remove(0);
                             temp_v.pop();
-                            let mut v_r = temp_v;
+                            let mut v_r = temp_v.as_str().replace(r#"\\"#, r#"\"#);
+                            v_r = v_r.replace(r#"\""#, r#"""#);
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
@@ -289,6 +295,11 @@ macro_rules! msupdate {
                 "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
+                "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
+                    i_data.to_string() + ""
+                },
                 _ => {
                    "".to_string()
                 },
@@ -316,14 +327,15 @@ macro_rules! msupdate {
                     temp_v = format!("{:?}", temp_op);
                     v_type = get_v_type(op_v_type)
                 }
-                if temp_v.as_str() == "null" {
+                if temp_v.as_str() == "null" || temp_v.as_str() == "\"null\"" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             temp_v.remove(0);
                             temp_v.pop();
-                            let mut v_r = temp_v;
+                            let mut v_r = temp_v.as_str().replace(r#"\\"#, r#"\"#);
+                            v_r = v_r.replace(r#"\""#, r#"""#);
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
@@ -439,6 +451,11 @@ macro_rules! msupdate {
                 "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
+                "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
+                    i_data.to_string() + ""
+                },
                 _ => {
                    "".to_string()
                 },
@@ -466,14 +483,15 @@ macro_rules! msupdate {
                     temp_v = format!("{:?}", temp_op);
                     v_type = get_v_type(op_v_type)
                 }
-                if temp_v.as_str() == "null" {
+                if temp_v.as_str() == "null" || temp_v.as_str() == "\"null\"" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             temp_v.remove(0);
                             temp_v.pop();
-                            let mut v_r = temp_v;
+                            let mut v_r = temp_v.as_str().replace(r#"\\"#, r#"\"#);
+                            v_r = v_r.replace(r#"\""#, r#"""#);
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
@@ -601,6 +619,11 @@ macro_rules! msupdate {
                 "&f32" | "&f64" | "&f128" | "&bool" => {
                     i_data.to_string() + ""
                 },
+                "&&u8" | "&&u16" | "&&u32" | "&&u64" | "&&u128" | "&&usize" |
+                "&&i8" | "&&i16" | "&&i32" | "&&i64" | "&&i128" | "&&isize" |
+                "&&f32" | "&&f64" | "&&f128" | "&&bool" => {
+                    i_data.to_string() + ""
+                },
                 _ => {
                    "".to_string()
                 },
@@ -628,14 +651,15 @@ macro_rules! msupdate {
                     temp_v = format!("{:?}", temp_op);
                     v_type = get_v_type(op_v_type)
                 }
-                if temp_v.as_str() == "null" {
+                if temp_v.as_str() == "null" || temp_v.as_str() == "\"null\"" {
                     value = "NULL,".to_string();
                 } else {
                     value = match v_type {
                         "&&str" | "&alloc::string::String" | "&&alloc::string::String" => {
                             temp_v.remove(0);
                             temp_v.pop();
-                            let mut v_r = temp_v;
+                            let mut v_r = temp_v.as_str().replace(r#"\\"#, r#"\"#);
+                            v_r = v_r.replace(r#"\""#, r#"""#);
                             v_r = v_r.replace("'", "''");
                             "N'".to_string() + &v_r + "',"
                         },
