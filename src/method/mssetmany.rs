@@ -17,18 +17,14 @@
 /// }
 /// let vec_data = vec![
 ///     Item {
-///         title: "mssetmany名字".to_string(),
-///         content: "null".to_string(),
-///         price: 32.23,
-///         total: Some(12),
-///         uid: 3
+///         content: "null".to_string(), // NULL 值
+///         total: 11,
+///         price: None, // DEFAULT 值
 ///     },
 ///     Item {
-///         title: "mssetmany名字名字2".to_string(),
-///         content: String::from(r#"m'y,,a#@!@$$^&^%&&#\\ \ \ \ \ \ \ \\\\\$,,adflll+_)"(_)*)(32389)d(ŐдŐ๑)🍉 .',"#),
-///         price: 12.2,
-///         total: None,
-///         uid: 2
+///         content: info.to_owned(),
+///         total: 10,
+///         price: Some(30.5), // 30.5
 ///     },
 /// ];
 /// let sql = mssetmany!("for_test", vec_data);
@@ -52,7 +48,7 @@ macro_rules! mssetmany {
                 if (temp_v.is_number()) {
                     value = value + temp_v.to_string().as_str() + ",";
                 } else if temp_v.is_null() {
-                    value = value + "NULL,";
+                    value = value + "DEFAULT,";
                 } else if temp_v.is_string() {
                     let t_v = temp_v.as_str().unwrap();
                     if t_v == "null" {
